@@ -1,0 +1,81 @@
+Open this URL in a browser:
+    https://accounts.google.com/o/oauth2/auth?response_type=code&client_id=103740898794.apps.googleusercontent.com&redirect_uri=urn:ietf:wg:oauth:2.0:oob&scope=https://www.googleapis.com/auth/tasks&access_type=offline
+
+Copy the access code shown in the browser
+
+
+Make this POST request:
+    curl -d 'code=4/cIMzafkc2NX8J8HkkZjcDwuAnXXh.4ixm9srDK_0cEnp6UAPFm0F-dBvvfwI&client_id=103740898794.apps.googleusercontent.com&client_secret=KAisT0QCdtJ8exXtQ48tJQeM&redirect_uri=urn:ietf:wg:oauth:2.0:oob&grant_type=authorization_code' https://accounts.google.com/o/oauth2/token
+
+Response looks like this:
+    {
+    "access_token" : "ya29.AHES6ZSL8DEXlklrQrGOTmJCPzO2vfJVfB96bIlAEM5iLhfQ_olLqw",
+    "token_type" : "Bearer",
+    "expires_in" : 3600,
+    "refresh_token" : "1/Rd_2ExZKaxX7DomVHfGJ6K7vuHn7MkGbZX8HG2lNagk"
+    }
+
+
+Using a refresh token to get a new access token:
+    curl -d 'refresh_token=1/Rd_2ExZKaxX7DomVHfGJ6K7vuHn7MkGbZX8HG2lNagk&client_id=103740898794.apps.googleusercontent.com&client_secret=KAisT0QCdtJ8exXtQ48tJQeM&grant_type=refresh_token' https://accounts.google.com/o/oauth2/token
+
+Response looks like this:
+    {
+    "access_token" : "ya29.AHES6ZR72j0AtLdReyqL1X62NtQRGXJRI9WSYlxWzc-P1w4shl8n_Q",
+    "token_type" : "Bearer",
+    "expires_in" : 3600
+    }
+
+Make an API request like this:
+    curl https://www.googleapis.com/tasks/v1/users/@me/lists?access_token=ya29.AHES6ZSL8DEXlklrQrGOTmJCPzO2vfJVfB96bIlAEM5iLhfQ_olLqw
+
+
+Represent auth info as:
+    google_api_auth(RefreshToken, AccessToken, ExpirationTime)
+A predicate `access_token(Auth0, AccessToken, Auth)` returns an access token
+that's guaranteed to be valid for the next 5 seconds along with an up to date
+google_api_auth/3 term.  access_token/3 might have to refresh the access
+token in passing.
+
+Represent task list as:
+    tasklist(Id, Title, UpdatedTime)
+
+Represent task as:
+    task( Id
+        , Etag
+        , Title
+        , UpdatedTime
+        , Parent    % optional
+        , Position
+        , Notes
+        , Status    % one of "needsAction" or "completed"
+        , DueTime   % optional
+        , CompletedTime  % optional
+        , Deleted   % boolean
+        , Hidden    % boolean
+        , Links     % list(link)
+        )
+
+Represent link as:
+    link( Type, Description, Link )
+
+
+When making requests to Google APIs, try this pattern:
+    use_module(library(http/http_open))
+    use_module(library(http/http_ssl_plugin))
+    use_module(library(http/http_json))
+    http_open(Url, Stream, [])
+    defer(close(Stream))
+    json_read(Stream, Json)
+
+I'll want some code for working with arbitrary Google APIs:
+    * fetch access and refresh tokens (primitive OAuth flow)
+    * get a new access token based on the refresh token
+    * build a URI given API name, version, path list, query parameters
+    * process JSON result and throw exceptions on error
+
+I'll want some high-level code for working with the Google Tasks API
+specifically:
+    * tasklist(TaskList) is multi. Iterates all tasklist values
+    * task(TaskList, Task) is multi.  Iterates all task values
+      belonging to TaskList
