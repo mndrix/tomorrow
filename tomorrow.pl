@@ -5,7 +5,10 @@
 
 :- [http].
 
-% tokens(RefreshToken:atom, AccessToken:atom, Expiry:unix_epoch_seconds)
+% tokens( refresh_token:atom
+%       , access_token:atom
+%       , expiry:unix_epoch_seconds
+%       )
 refresh_token(tokens(X,_,_), X).
 access_token(tokens(_,X,_), X).
 expiry(tokens(_,_,X), X).
@@ -15,11 +18,61 @@ is_access_token_expired(Tokens) :-
     Now > Expiry.
 
 
+% tasklist(id:atom, title:atom)
+id(tasklist(X,_), X).
+title(tasklist(_,X), X).
+
 main(_) :-
     get_access_token(AccessToken),
-    writeln(AccessToken).
+    tasklist(AccessToken, TaskList),
+    write_quoted(TaskList),
+    nl,
+    fail.
 
 
+% tasklist(+AccessToken, -TaskList) is nondet.
+%
+% True if TaskList is a current list belonging to user represented
+% by AcessToken.
+:- dynamic cache_expiration/3
+         , cached_tasklist/2
+         .
+tasklist(AccessToken, TaskList) :-
+    % can we use cached versions of the tasklist values?
+
+    cache_expiration(AccessToken, tasklist, Expiry),
+    get_time(Now),
+    Now < Expiry,
+    !,
+    cached_tasklist(AccessToken, TaskList).
+tasklist(AccessToken, TaskList) :-
+    % cached tasklist values are outdated; rebuild cache.
+
+    % retract old cache values
+    retractall(cache_expiration(AccessToken, tasklist, _)),
+    retractall(cached_tasklist(AccessToken, _)),
+
+    % TODO factor out predicate for building tasks URIs
+    % TODO factor out predicate for making tasks API requests
+
+    AccessToken = _, % hack around quasiquote singleton warning
+    __uri_qq_base = 'https://www.googleapis.com/tasks/v1/users/@me/',
+    http_get( {|uri||lists?access_token=$AccessToken|}
+            , json(JSON)
+            ),
+    get_time(Now),
+    Expiry is Now + 60,
+    assertz(cache_expiration(AccessToken, tasklist, Expiry)),
+
+    json_get(JSON, items, Items),
+    member(Item, Items),
+    json_get(Item, id, Id),
+    json_get(Item, title, Title),
+    TaskList = tasklist(Id, Title),
+    assertz(cached_tasklist(AccessToken, TaskList)).
+
+
+% TODO factor out each OAuth step to a library
 get_access_token(AccessToken) :-
     % look for a cached token
     tokens_cache(read, Tokens0),
@@ -96,10 +149,15 @@ freshen_access_token(Tokens0, Tokens) :-
     tokens_cache(write, Tokens).
 
 
-extract_tokens(json(Object), tokens(Refresh, Access, Expiry)) :-
-    memberchk(access_token=Access, Object),
-    memberchk(expires_in=Expires, Object),
-    ignore(memberchk(refresh_token=Refresh, Object)),  % optional field
+% TODO factor out to library?
+json_get(json(Object), Key, Value) :-
+    memberchk(Key=Value, Object).
+
+
+extract_tokens(JSON, tokens(Refresh, Access, Expiry)) :-
+    json_get(JSON, access_token, Access),
+    json_get(JSON, expires_in, Expires),
+    ignore(json_get(JSON, refresh_token, Refresh)), % optional field
 
     % calculate expiry time with a small safety factor
     get_time(Now),
