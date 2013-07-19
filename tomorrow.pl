@@ -47,23 +47,8 @@ status(task(_,_,_,_,X), X).
 %
 % True if TaskList is a current list belonging to user represented
 % by AcessToken.
-:- dynamic cache_expiration/3
-         , cached_tasklist/2
-         .
-tasklist(AccessToken, TaskList) :-
-    % can we use cached versions of the tasklist values?
-
-    cache_expiration(AccessToken, tasklist, Expiry),
-    get_time(Now),
-    Now < Expiry,
-    !,
-    cached_tasklist(AccessToken, TaskList).
 tasklist(AccessToken, TaskList) :-
     % cached tasklist values are outdated; rebuild cache.
-
-    % retract old cache values
-    retractall(cache_expiration(AccessToken, tasklist, _)),
-    retractall(cached_tasklist(AccessToken, _)),
 
     % TODO factor out predicate for building tasks URIs
     % TODO factor out predicate for making tasks API requests
@@ -73,16 +58,12 @@ tasklist(AccessToken, TaskList) :-
     http_get( {|uri||users/@me/lists?access_token=$AccessToken|}
             , json(JSON)
             ),
-    get_time(Now),
-    Expiry is Now + 60,
-    assertz(cache_expiration(AccessToken, tasklist, Expiry)),
 
     json_get(JSON, items, Items),
     member(Item, Items),
     json_get(Item, id, Id),
     json_get(Item, title, Title),
-    TaskList = tasklist(Id, Title),
-    assertz(cached_tasklist(AccessToken, TaskList)).
+    TaskList = tasklist(Id, Title).
 
 
 % task(+AccessToken, +TaskList, -Task) is nondet.
