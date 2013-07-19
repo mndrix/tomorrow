@@ -69,8 +69,8 @@ tasklist(AccessToken, TaskList) :-
     % TODO factor out predicate for making tasks API requests
 
     AccessToken = _, % hack around quasiquote singleton warning
-    __uri_qq_base = 'https://www.googleapis.com/tasks/v1/users/@me/',
-    http_get( {|uri||lists?access_token=$AccessToken|}
+    __uri_qq_base = 'https://www.googleapis.com/tasks/v1/',
+    http_get( {|uri||users/@me/lists?access_token=$AccessToken|}
             , json(JSON)
             ),
     get_time(Now),
