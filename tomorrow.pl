@@ -19,6 +19,7 @@ is_access_token_expired(Tokens) :-
 
 
 % tasklist(id:atom, title:atom)
+:- discontiguous id/2, title/2.
 id(tasklist(X,_), X).
 title(tasklist(_,X), X).
 
@@ -28,6 +29,18 @@ main(_) :-
     write_quoted(TaskList),
     nl,
     fail.
+
+
+% task(id:atom, title:atom, notes:atom, due:atom, status:atom)
+%
+% notes='' means the field is missing.
+% due='' means the field is missing.
+% status=needsAction | completed.
+id(task(X,_,_,_,_), X).
+title(task(_,X,_,_,_), X).
+notes(task(_,_,X,_,_), X).
+due(task(_,_,_,X,_), X).
+status(task(_,_,_,_,X), X).
 
 
 % tasklist(+AccessToken, -TaskList) is nondet.
@@ -70,6 +83,30 @@ tasklist(AccessToken, TaskList) :-
     json_get(Item, title, Title),
     TaskList = tasklist(Id, Title),
     assertz(cached_tasklist(AccessToken, TaskList)).
+
+
+% task(+AccessToken, +TaskList, -Task) is nondet.
+%
+% True if Task is a child task of TaskList for the user represented by
+% AccessToken.
+task(AccessToken, TaskList, Task) :-
+    AccessToken = _, % hack around quasiquote singleton warnings
+    TaskListId = _,
+
+    __uri_qq_base = 'https://www.googleapis.com/tasks/v1/',
+    id(TaskList, TaskListId),
+    http_get( {|uri||lists/$TaskListId/tasks?access_token=$AccessToken|}
+            , json(JSON)
+            ),
+
+    json_get(JSON, items, Items),
+    member(Item, Items),
+    json_get(Item, id, Id),
+    json_get(Item, title, Title),
+    ( json_get(Item, notes, Notes) -> true; Notes='' ),
+    ( json_get(Item, due, Due) -> true; Due='' ),
+    json_get(Item, status, Status),
+    Task = task(Id, Title, Notes, Due, Status).
 
 
 % TODO factor out each OAuth step to a library
