@@ -3,7 +3,7 @@
 :- use_module(library(uri_qq)).
 
 
-:- [http].
+:- [http, julian].
 
 % tokens( refresh_token:atom
 %       , access_token:atom
@@ -23,13 +23,6 @@ is_access_token_expired(Tokens) :-
 id(tasklist(X,_), X).
 title(tasklist(_,X), X).
 
-main(_) :-
-    get_access_token(AccessToken),
-    tasklist(AccessToken, TaskList),
-    write_quoted(TaskList),
-    nl,
-    fail.
-
 
 % task(id:atom, title:atom, notes:atom, due:atom, status:atom)
 %
@@ -41,6 +34,95 @@ title(task(_,X,_,_,_), X).
 notes(task(_,_,X,_,_), X).
 due(task(_,_,_,X,_), X).
 status(task(_,_,_,_,X), X).
+
+
+main(_) :-
+    get_access_token(AccessToken),
+
+    tasklist(AccessToken, Future),
+    title(Future, 'Future'),
+    task(AccessToken, Future, Task),
+    template_applicable(Task),
+
+    write_quoted(Task),
+    nl,
+    fail.
+
+
+template_applicable(Task) :-
+    due(Task, ''),
+    repeats(Task, '').
+template_applicable(Task) :-
+    % task is due today
+    due(Task, Due),
+    date_is(Due, today).
+template_applicable(Task) :-
+    % task schedule falls on today
+    due(Task, ''),
+    repeats(Task, Constraints),
+    date_is(_, [today|Constraints]).
+
+% make all these calculations symmetric
+date_is(mjd(Days, Nanos), unix(UnixEpochSeconds)) :-
+    U = rationalize(UnixEpochSeconds),
+    DaysBeforeUnixEpoch   = (24405875 rdiv 10),
+    OffsetBetweenJDandMJD = (24000005 rdiv 10),
+
+    % TODO nanosecond calculation is wrong
+    MJD is (U rdiv 86400) + DaysBeforeUnixEpoch - OffsetBetweenJDandMJD,
+    Days is floor(MJD),
+    Nanos is floor((MJD - Days) * 86_400 * 1_000_000_000).
+date_is(mjd(Days, Nanos), rfc3339(String)) :-
+    phrase(rfc3339(Year,Month,Day,_,_,_,_), String),
+    % TODO make date_name/2 clauses into date_is/2 clauses
+    date_name(datetime(Days,Nanos), gregorian(Year, Month, Day)).
+
+% padded_integer(W,N)//
+%
+% Describes a zero-padded integer N in a field exactly W characters
+% wide.
+padded_integer(W, N, A, B) :-
+    integer(W),
+    integer(N),
+    !,
+    number_codes(N, Numbers),
+    length(Numbers, NumbersLen),
+    plus(ZerosLen, NumbersLen, W),
+    length(Zeros, ZerosLen),
+    maplist(=(0'0), Zeros),
+    format(codes(A,B), '~s~s', [Zeros, Numbers]).
+padded_integer(W0,N) -->
+    "0",
+    !,
+    padded_integer(W,N),
+    { succ(W, W0) }.
+padded_integer(W,N) -->
+    integer(N),
+    { number_codes(N, Codes) },
+    { length(Codes, W) }.
+
+
+rfc3339(Y,Mon,D,H,Min,S,Zone) -->
+    padded_integer(4, Y),
+    "-",
+    padded_integer(2, Mon),
+    "-",
+    padded_integer(2, D),
+    "T",
+    padded_integer(2, H),
+    ":",
+    padded_integer(2, Min),
+    ":",
+    float(S),
+    string(Zone),
+
+    % and it must be a valid gregorian date
+    { gregorian(Y,Mon,D) }.
+
+
+% TODO imlement this
+repeats(_Task, _Constraints) :-
+    fail.
 
 
 % tasklist(+AccessToken, -TaskList) is nondet.
@@ -85,7 +167,11 @@ task(AccessToken, TaskList, Task) :-
     json_get(Item, id, Id),
     json_get(Item, title, Title),
     ( json_get(Item, notes, Notes) -> true; Notes='' ),
-    ( json_get(Item, due, Due) -> true; Due='' ),
+    ( json_get(Item, due, RFC3339) ->
+        date_is(Due, rfc3339(RFC3339))
+    ; % otherwise ->
+        Due=''
+    ),
     json_get(Item, status, Status),
     Task = task(Id, Title, Notes, Due, Status).
 
