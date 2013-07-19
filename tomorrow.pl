@@ -69,13 +69,27 @@ date_is(mjd(Days, Nanos), unix(UnixEpochSeconds)) :-
     OffsetBetweenJDandMJD = (24000005 rdiv 10),
 
     % TODO nanosecond calculation is wrong
+    % TODO use clp(fd) to make this work in both directions
     MJD is (U rdiv 86400) + DaysBeforeUnixEpoch - OffsetBetweenJDandMJD,
     Days is floor(MJD),
     Nanos is floor((MJD - Days) * 86_400 * 1_000_000_000).
-date_is(mjd(Days, Nanos), rfc3339(String)) :-
-    phrase(rfc3339(Year,Month,Day,_,_,_,_), String),
+date_is(mjd(Days, Nanos), rfc3339(Text)) :-
+    text_codes(Text, Codes),
+    phrase(rfc3339(Year,Month,Day,_,_,_,_), Codes),
     % TODO make date_name/2 clauses into date_is/2 clauses
     date_name(datetime(Days,Nanos), gregorian(Year, Month, Day)).
+date_is(mjd(Day, _), today) :-
+    get_time(Now),
+    date_is(mjd(Day,_), unix(Now)).
+
+
+text_codes(Text, Codes) :-
+    atom(Text),
+    !,
+    atom_codes(Text, Codes).
+text_codes(Text, Text) :-
+    is_list(Text).
+
 
 % padded_integer(W,N)//
 %
@@ -100,6 +114,8 @@ padded_integer(W,N) -->
     integer(N),
     { number_codes(N, Codes) },
     { length(Codes, W) }.
+padded_integer(0, _) -->
+    [].
 
 
 rfc3339(Y,Mon,D,H,Min,S,Zone) -->
