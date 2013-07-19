@@ -6,7 +6,8 @@
 
 http_get(Url, Response) :-
     http_open(Url, Stream, []),
-    read_stream_to_codes(Stream, Response),
+    read_stream_to_codes(Stream, Codes),
+    create_response(Response, Codes),
     close(Stream).
 
 http_post(Url, Form, Response) :-
