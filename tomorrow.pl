@@ -60,12 +60,21 @@ main(_) :-
 
     % tasks in the Future list
     task(AccessToken, Future, Template),
-    template_applicable(Template),
+    template_applicable(Template, Status),
 
     specialize_template(Template, Task),
     insert_task(AccessToken, Today, Task, Inserted),
     write_quoted(Inserted),
     nl,
+
+    % clean up templates, if they need it
+    ( Status = delete ->
+        delete_task(AccessToken, Future, Template),
+        writeln('deleted template that served its purpose')
+    ; % otherwise ->
+        true
+    ),
+    !, % TODO remove after testing
 
     fail.
 
@@ -89,18 +98,33 @@ insert_task(AccessToken, TaskList, Task, Inserted) :-
     json_task(Response, Inserted).
 
 
+delete_task(AccessToken, TaskList, Task) :-
+    TaskListId = _, % hack around quasiquote singleton warning
+    TaskId = _,
+    AccessToken = _,
+
+    __uri_qq_base = 'https://www.googleapis.com/tasks/v1/',
+    TaskListId = id $ TaskList,
+    TaskId = id $ Task,
+    Uri = {|uri||lists/$TaskListId/tasks/$TaskId?access_token=$AccessToken|},
+    http_delete(Uri,_).
+
+
+
 specialize_template(Template, Task) :-
     due(Template, _, '', Task).
 
 
-template_applicable(Task) :-
+% template_applicable(+Template:task, -Status)
+template_applicable(Task, delete) :-
+    % bare tasks always belong in Today
     due(Task, ''),
     repeats(Task, '').
-template_applicable(Task) :-
+template_applicable(Task, delete) :-
     % task is due today
     due(Task, Due),
     date_is(Due, today).
-template_applicable(Task) :-
+template_applicable(Task, retain) :-
     % task schedule falls on today
     due(Task, ''),
     repeats(Task, Constraints),

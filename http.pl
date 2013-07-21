@@ -39,6 +39,14 @@ http_post(Url, Data, Response) :-
     create_response(Response, Codes),
     close(Stream).
 
+
+http_delete(Url, Response) :-
+    http_open(Url, Stream, [method(delete)]),
+    read_stream_to_codes(Stream, Codes),
+    create_response(Response, Codes),
+    close(Stream).
+
+
 % convert a raw list of codes into a structured response according
 % to the user's requests
 create_response(codes(Codes), Codes).
