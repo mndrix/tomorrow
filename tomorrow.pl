@@ -50,12 +50,47 @@ main(_) :-
     % find Future list
     tasklist(AccessToken, Future),
     title(Future, 'Future'),
-    task(AccessToken, Future, Task),
-    template_applicable(Task),
+    format('future id = ~w~n', id $ Future),
 
-    write_quoted(Task),
+    % find Today list
+    tasklist(AccessToken, Today),
+    title(Today, 'Today'),
+    format('today id = ~w~n', id $ Today),
+
+
+    % tasks in the Future list
+    task(AccessToken, Future, Template),
+    template_applicable(Template),
+
+    specialize_template(Template, Task),
+    insert_task(AccessToken, Today, Task, Inserted),
+    write_quoted(Inserted),
     nl,
+
     fail.
+
+
+% TODO support all insertable fields of a task
+insert_task(AccessToken, TaskList, Task, Inserted) :-
+    TaskListId = _, % hack around quasiquote singleton warning
+    AccessToken = _,
+
+    % build JSON structure. intentionally omit due date
+    Request = json([ title = title $ Task
+                   , notes = notes $ Task
+                   ]),
+
+    __uri_qq_base = 'https://www.googleapis.com/tasks/v1/',
+    TaskListId = id $ TaskList,
+    http_post( {|uri||lists/$TaskListId/tasks?access_token=$AccessToken|}
+             , json(Request)
+             , json(Response)
+             ),
+    json_task(Response, Inserted).
+
+
+specialize_template(Template, Task) :-
+    due(Template, _, '', Task).
 
 
 template_applicable(Task) :-
