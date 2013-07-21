@@ -36,6 +36,13 @@ notes(task(_,_,X,_,_), X).
 due(task(_,_,_,X,_), X).
 status(task(_,_,_,_,X), X).
 
+% setters
+due( task(Id,Title,Notes,DueOld,Status)
+   , DueOld
+   , DueNew
+   , task(Id,Title,Notes,DueNew,Status)
+   ).
+
 
 main(_) :-
     get_access_token(AccessToken),
