@@ -1,6 +1,7 @@
 :- use_module(library(func)).
 :- use_module(library(readutil), [read_line_to_codes/2]).
 :- use_module(library(uri_qq)).
+:- use_module(library(dcg/basics), [float//1, integer//1, string//1]).
 
 
 :- [http, julian].
