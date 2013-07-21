@@ -182,6 +182,13 @@ task(AccessToken, TaskList, Task) :-
 
     json_get(JSON, items, Items),
     member(Item, Items),
+    json_task(Item, Task).
+
+
+%%	json_task(+JSON, -Task)
+%
+%	True if Task represents the Google Task encoded in JSON.
+json_task(Item, Task) :-
     json_get(Item, id, Id),
     json_get(Item, title, Title),
     ( json_get(Item, notes, Notes) -> true; Notes='' ),
