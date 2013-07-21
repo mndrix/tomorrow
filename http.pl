@@ -28,8 +28,13 @@ http_get(Url, Response) :-
     Expiry is Now + 60,
     assertz(http_get_cached(Url, Expiry, Response)).
 
-http_post(Url, Form, Response) :-
-    http_open(Url, Stream, [post(form(Form))]),
+http_post(Url, json(JSON), Response) :-
+    % POSTing a JSON body
+    !,
+    atom_json_term(Codes, JSON, [as(codes)]),
+    http_post(Url, codes('application/json', Codes), Response).
+http_post(Url, Data, Response) :-
+    http_open(Url, Stream, [post(Data)]),
     read_stream_to_codes(Stream, Codes),
     create_response(Response, Codes),
     close(Stream).

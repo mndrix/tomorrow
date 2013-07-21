@@ -222,7 +222,7 @@ get_access_token(AccessToken) :-
            , grant_type    = authorization_code
            ],
     http_post( {|uri||https://accounts.google.com/o/oauth2/token|}
-             , Form
+             , form(Form)
              , json(JSON)
              ),
     extract_tokens(JSON, Tokens),
@@ -258,7 +258,7 @@ freshen_access_token(Tokens0, Tokens) :-
            , grant_type    = refresh_token
            ],
     http_post( {|uri||https://accounts.google.com/o/oauth2/token|}
-             , Form
+             , form(Form)
              , json(JSON)
              ),
     extract_tokens(JSON, Tokens),
