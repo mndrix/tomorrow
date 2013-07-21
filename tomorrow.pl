@@ -40,6 +40,7 @@ status(task(_,_,_,_,X), X).
 main(_) :-
     get_access_token(AccessToken),
 
+    % find Future list
     tasklist(AccessToken, Future),
     title(Future, 'Future'),
     task(AccessToken, Future, Task),
@@ -165,10 +166,10 @@ tasklist(AccessToken, TaskList) :-
     TaskList = tasklist(Id, Title).
 
 
-% task(+AccessToken, +TaskList, -Task) is nondet.
+%% task(+AccessToken, +TaskList, -Task) is nondet.
 %
-% True if Task is a child task of TaskList for the user represented by
-% AccessToken.
+%  True if Task is a child task of TaskList for the user represented by
+%  AccessToken.
 task(AccessToken, TaskList, Task) :-
     AccessToken = _, % hack around quasiquote singleton warnings
     TaskListId = _,
