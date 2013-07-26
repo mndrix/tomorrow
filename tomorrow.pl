@@ -56,7 +56,7 @@ main(_) :-
     tasklist(AccessToken, Today),
     title(Today, 'Today'),
     format('today id = ~w~n', id $ Today),
-
+    nl,
 
     % tasks in the Future list
     task(AccessToken, Future, Template),
@@ -76,6 +76,7 @@ main(_) :-
     ),
     !, % TODO remove after testing
 
+    nl,
     fail.
 
 
