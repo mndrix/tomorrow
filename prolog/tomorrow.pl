@@ -1,6 +1,7 @@
 :- use_module(library(func)).
 :- use_module(library(readutil), [read_line_to_codes/2]).
 :- use_module(library(uri_qq)).
+:- use_module(library(dcg/basics), [string_without//2]).
 
 
 :- [http, julian].
@@ -60,6 +61,7 @@ main(_) :-
     % tasks in the Future list
     task(AccessToken, Future, Template),
     template_applicable(Template, Status),
+    fail, % TODO remove after debugging
 
     specialize_template(Template, Task),
     insert_task(AccessToken, Today, Task, Inserted),
@@ -122,7 +124,7 @@ specialize_template(Template, Task) :-
 template_applicable(Task, delete) :-
     % bare tasks always belong in Today
     due(Task, ''),
-    repeats(Task, '').
+    repeats(Task, "").
 template_applicable(Task, delete) :-
     % task is due today
     due(Task, Due),
@@ -130,13 +132,54 @@ template_applicable(Task, delete) :-
 template_applicable(Task, retain) :-
     % task schedule falls on today
     due(Task, ''),
-    repeats(Task, Constraints),
-    form_time([today|Constraints], _).
+    repeats(Task, English),
+    english_constraints(English, Constraints),
+    format('Recognized repetition: ~s~n', [English]),
+    form_time([today|Constraints]),
+    format('    => ~w~n', [Constraints]),
+    fail.  % TODO remove after debugging
 
 
 
-% TODO imlement this
-repeats(_Task, _Constraints) :-
+repeats(Task, English) :-
+    phrase(repeat_on(English), atom_codes $ notes $ Task, _),
+    !.
+repeats(_, "").
+
+repeat_on(English) -->
+    "Repeat on ",
+    string_without("\n", English).
+repeat_on(English) -->
+    string_without("\n", _),
+    "\n",
+    repeat_on(English).
+
+
+% TODO make string//1 an argument like Separator
+% TODO so that I can call phrase(split(comma, day_of_week, Parts), Xs)
+split(Separator, [Part|Parts]) -->
+    string(Part),
+    Separator,
+    split(Separator, Parts).
+split(_, [Part], Part, []).
+
+
+comma --> " and ".
+comma --> ", ".
+comma --> ",".
+
+
+english_constraints("weekday", [dow(Day)]) :-
+    !,
+    Weekdays = [monday,tuesday,wednesday,thursday,friday],
+    when(ground(Day), memberchk(Day, Weekdays)).
+english_constraints(English, [dow(Day)]) :-
+    atom_codes(Atom, English),
+    downcase_atom(Atom, Day),
+    dow_number(Day, _),
+    !.
+english_constraints(English, _) :-
+    format('Unknown repetition: ~s~n', [English]),
     fail.
 
 
