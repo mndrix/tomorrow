@@ -123,32 +123,12 @@ template_applicable(Task, delete) :-
 template_applicable(Task, delete) :-
     % task is due today
     due(Task, Due),
-    date_is(Due, today).
+    form_time(today, Due).
 template_applicable(Task, retain) :-
     % task schedule falls on today
     due(Task, ''),
     repeats(Task, Constraints),
-    date_is(_, [today|Constraints]).
-
-% make all these calculations symmetric
-date_is(mjd(Days, Nanos), unix(UnixEpochSeconds)) :-
-    U = rationalize(UnixEpochSeconds),
-    DaysBeforeUnixEpoch   = (24405875 rdiv 10),
-    OffsetBetweenJDandMJD = (24000005 rdiv 10),
-
-    % TODO nanosecond calculation is wrong
-    % TODO use clp(fd) to make this work in both directions
-    MJD is (U rdiv 86400) + DaysBeforeUnixEpoch - OffsetBetweenJDandMJD,
-    Days is floor(MJD),
-    Nanos is floor((MJD - Days) * 86_400 * 1_000_000_000).
-date_is(mjd(Days, Nanos), rfc3339(Text)) :-
-    text_codes(Text, Codes),
-    phrase(rfc3339(Year,Month,Day,_,_,_,_), Codes),
-    % TODO make date_name/2 clauses into date_is/2 clauses
-    date_name(datetime(Days,Nanos), gregorian(Year, Month, Day)).
-date_is(mjd(Day, _), today) :-
-    get_time(Now),
-    date_is(mjd(Day,_), unix(Now)).
+    form_time([today|Constraints], _).
 
 
 text_codes(Text, Codes) :-
@@ -259,7 +239,7 @@ json_task(Item, Task) :-
     json_get(Item, title, Title),
     ( json_get(Item, notes, Notes) -> true; Notes='' ),
     ( json_get(Item, due, RFC3339) ->
-        date_is(Due, rfc3339(RFC3339))
+        form_time(rfc3339(RFC3339), Due)
     ; % otherwise ->
         Due=''
     ),

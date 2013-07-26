@@ -1,7 +1,9 @@
 /*
-:- module(julian, [ date_name/2
+:- module(julian, [ form_time/2
                   , day_of_week/2
                   , gregorian/3
+                  , mjd/1
+                  , nano/1
                   ]).
 */
 :- use_module(library(clpfd)).
@@ -50,6 +52,12 @@ gregorian(Y,M,D) :-
 mjd(MJD) :-
     MJD in -2400328 .. 514671.
 
+%%	nano(?Nano:integer) is det.
+%
+%	True if Nano is a valid number of nanoseconds since midnight.
+nano(Nano) :-
+    Nano in 0 .. 86_400_000_000_000.
+
 %%	day_of_week(?Datetime, ?DayOfWeek:atom) is det.
 %
 %	True if Datetime occurs on the given day of the week.
@@ -70,44 +78,46 @@ day_name(5, saturday).
 day_name(6, sunday).
 
 
-%%	date_name(?Datetime, ?Name)
+%%	form_time(?Form, ?Datetime)
 %
-%	True if Datetime can be described by Name.  Name is
+%	True if Datetime can be described by Form.  Form is
 %	a sugary representation of a set of datetimes.  This
 %	predicate is the workhorse for converting between
 %	datetime values and other date representations. It's
 %	also the workhorse for further constraining a datetime
 %	value.
 %
-%	Here are some values for Name.  =today=
-%	represents the current day in local time.  =sunday=
-%	(and other weekday names) represent the set of all Sundays
-%	in history.  =|foo,bar|= means that both =foo= and =bar=
-%	constraints apply to this datetime.
-%	=|gregorian(Year,Month,Day)|= constrains Datetime to something
-%	with the given representation in the Gregorian calendar.  For
-%	example, =|gregorian(_,3,_)|= represents the set of all the
-%	months of March in history.
+%	Here are some values for Form.
 %
-%	As a demonstration, =july_fourth= constrains Datetime to
-%	the Fourth of July holiday in 1776 or later.  This predicate
+%		* `today` represents the current day in local time
+%		* `sunday` (and other weekday names) represent the set of all
+%		  Sundays in history
+%		* `[foo,bar]` means that both `foo` and `bar`
+%		  constraints apply to this datetime
+%		* `gregorian(Year,Month,Day)`
+%		  constrains Datetime to something with the given representation
+%		  in the Gregorian calendar. For example, `gregorian(_,3,_)`
+%		  represents the set of all the months of March in history.
+%
+%	As a demonstration, `july_fourth` constrains Datetime to
+%	the Fourth of July holiday in 1776 or later.
+%
+%	This predicate
 %	is multifile because other modules might support different
 %	calendars, different holiday schedules, etc.
-:- multifile date_name/2.
-date_name(Dt, today) :-
+:- multifile form_time/2.
+form_time(today, Dt) :-
     get_time(Now),
     stamp_date_time(Now, date(Year, Month, Day, _,_,_,_,_,_), local),
-    date_name(Dt, gregorian(Year,Month,Day)),
-    !.
-date_name(Dt, (First,Rest)) :-  % constraint conjunction
-    date_name(Dt, First),
-    !,
-    date_name(Dt, Rest).
-date_name(Dt, DayOfWeek) :-     % day of week constraints
+    form_time(gregorian(Year,Month,Day), Dt).
+form_time(now, Dt) :-
+    get_time(Now),
+    form_time(unix(Now), Dt).
+form_time(DayOfWeek, Dt) :-     % day of week constraints
     day_name(_, DayOfWeek),
     !,
     day_of_week(Dt, DayOfWeek).
-date_name(datetime(MJD,_Nano), gregorian(Year, Month, Day)) :-
+form_time(gregorian(Year, Month, Day), datetime(MJD,_Nano)) :-
     gregorian(Year, Month, Day),
     mjd(MJD),
     !,
@@ -138,9 +148,23 @@ date_name(datetime(MJD,_Nano), gregorian(Year, Month, Day)) :-
         labeling([leftmost, up, bisect], [MJD])
     ; true
     ).
-date_name(Datetime, july_fourth) :-
+form_time(unix(UnixEpochSeconds), mjd(Days, Nanos)) :-
+    U = rationalize(UnixEpochSeconds),
+    DaysBeforeUnixEpoch   = (24405875 rdiv 10),
+    OffsetBetweenJDandMJD = (24000005 rdiv 10),
+
+    % TODO nanosecond calculation is wrong
+    % TODO use clp(fd) to make this work in both directions
+    MJD is (U rdiv 86400) + DaysBeforeUnixEpoch - OffsetBetweenJDandMJD,
+    Days is floor(MJD),
+    Nanos is floor((MJD - Days) * 86_400 * 1_000_000_000).
+form_time(rfc3339(Text), mjd(Days, Nanos)) :-
+    text_codes(Text, Codes),
+    phrase(rfc3339(Year,Month,Day,_,_,_,_), Codes),
+    form_time(gregorian(Year, Month, Day), mjd(Days,Nanos)).
+form_time(july_fourth, Datetime) :-
     Y #>= 1776,
-    date_name(Datetime, gregorian(Y,7,4)).
+    form_time(gregorian(Y,7,4), Datetime).
 
 
 :- begin_tests(acceptable_gregorian_dates).
@@ -165,7 +189,7 @@ test(2016) :-
 
 :- begin_tests(gregorian_conversion).
 test(march_16_2013) :-
-    date_name(datetime(56367, _), gregorian(2013,3,16)).
+    form_time(gregorian(2013,3,16), datetime(56367, _)).
 test(unix_epoch) :-
-    date_name(datetime(40587, _), gregorian(1970,1,1)).
+    form_time(gregorian(1970,1,1), datetime(40587, _)).
 :- end_tests(gregorian_conversion).
