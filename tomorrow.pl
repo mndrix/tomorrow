@@ -326,7 +326,7 @@ freshen_access_token(Tokens0, Tokens) :-
     % access token has expired so we need a new one
 
     % use refresh_token to get a new access token
-    Form = [ refresh_token = '1/Rd_2ExZKaxX7DomVHfGJ6K7vuHn7MkGbZX8HG2lNagk'
+    Form = [ refresh_token = refresh_token $ Tokens0
            , client_id     = '103740898794.apps.googleusercontent.com'
            , client_secret = 'KAisT0QCdtJ8exXtQ48tJQeM'
            , grant_type    = refresh_token
