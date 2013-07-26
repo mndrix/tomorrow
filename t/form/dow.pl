@@ -5,11 +5,11 @@
 
 'weekday(thursday), forward' :-
     form_time(gregorian(1970,1,1), Dt),
-    form_time(weekday(thursday), Dt).
+    form_time(dow(thursday), Dt).
 'weekday(thursday), backward' :-
     form_time(gregorian(1970,1,1), Dt),
-    form_time(weekday(Weekday), Dt),
+    form_time(dow(Weekday), Dt),
     Weekday = thursday.
 'weekday(thursday), compound' :-
-    form_time([weekday(Weekday), gregorian(1970,1,1)], _),
+    form_time([dow(Weekday), gregorian(1970,1,1)], _),
     Weekday = thursday.

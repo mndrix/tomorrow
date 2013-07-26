@@ -75,9 +75,9 @@ datetime(datetime(MJD, Nano), MJD, Nano) :-
 datetime(Dt) :-
     datetime(Dt, _, _).
 
-%%	weekday_number(?Weekday:atom, ?Number:integer) is semidet.
+%%	dow_number(?DayOfWeek:atom, ?Number:integer) is semidet.
 %
-%	True if Number is the ISO number for Weekday.
+%	True if Number is the ISO number for DayOfWeek.
 %	0 is Monday, 6 is Sunday.
 weekday_number(monday,    0).
 weekday_number(tuesday,   1).
@@ -102,7 +102,7 @@ weekday_number(sunday,    6).
 %		* `today` - the set of all seconds in the local day
 %		* `now` - the current nanosecond
 %		* `sunday` - the set of all Sundays in history
-%		* `weekday(tuesday)` - the set of all Tuesdays in history
+%		* `dow(tuesday)` - the set of all Tuesdays in history
 %		* `unix(EpochSeconds)` - floating point seconds since the Unix
 %		  epoch
 %		* `[foo,bar]` - both `foo` and `bar` constraints apply
@@ -130,10 +130,10 @@ form_time(today, Dt) :-
 form_time(now, Dt) :-
     get_time(Now),
     form_time(unix(Now), Dt).
-form_time(weekday(Weekday), datetime(MJD, _)) :-
+form_time(dow(DayOfWeek), datetime(MJD, _)) :-
     (MJD+2) mod 7 #= DayNumber,
-    when( (ground(Weekday) ; ground(DayNumber))
-        , weekday_number(Weekday, DayNumber)
+    when( (ground(DayOfWeek) ; ground(DayNumber))
+        , weekday_number(DayOfWeek, DayNumber)
         ),
     !.
 form_time(Year-Month-Day, Dt) :-
