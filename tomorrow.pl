@@ -74,7 +74,6 @@ main(_) :-
     ; % otherwise ->
         true
     ),
-    !, % TODO remove after testing
 
     nl,
     fail.

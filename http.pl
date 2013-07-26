@@ -41,7 +41,14 @@ http_post(Url, Data, Response) :-
 
 
 http_delete(Url, Response) :-
-    http_open(Url, Stream, [method(delete)]),
+    % TODO replace override header with method(delete) once SWI supports it
+    http_open( Url
+             , Stream
+             , [ post(codes(""))
+               , request_header('X-HTTP-Method-Override'='DELETE')
+               , status_code(204)  % No Content
+               ]
+             ),
     read_stream_to_codes(Stream, Codes),
     create_response(Response, Codes),
     close(Stream).
