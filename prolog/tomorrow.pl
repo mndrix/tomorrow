@@ -115,7 +115,11 @@ specialize_template(Template, Task) :-
     due(Template, _, '', Task).
 
 
-% template_applicable(+Template:task, -Status)
+%%  template_applicable(+Template:task, -Status:atom)
+%
+%   True if Template represents a task template that's applicable to the
+%   current day. Status is unified with a value indicating what should
+%   be done with the Template.  It's one of: `delete` or `retain`.
 template_applicable(Task, delete) :-
     % bare tasks always belong in Today
     due(Task, ''),
