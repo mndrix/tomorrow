@@ -58,24 +58,26 @@ mjd(MJD) :-
 nano(Nano) :-
     Nano in 0 .. 86_400_000_000_000.
 
-%%	day_of_week(?Datetime, ?DayOfWeek:atom) is det.
+%%	datetime(?Datetime, ?MJD, ?Nano) is det.
 %
-%	True if Datetime occurs on the given day of the week.
-day_of_week(datetime(MJD, _), DayOfWeek) :-
-    (MJD+2) mod 7 #= DayNumber,
-    day_name(DayNumber, DayOfWeek).
+%   True if Datetime falls on modified Julian day MJD and occurs Nano
+%   nanoseconds after midnight.
+datetime(datetime(MJD, Nano), MJD, Nano) :-
+    mjd(MJD),
+    nano(Nano).
 
-%%	day_name(?Number:integer, ?DayOfWeek:atom) is semidet.
+
+%%	weekday_number(?Weekday:atom, ?Number:integer) is semidet.
 %
-%	True if Number is the ISO number for DayOfWeek.
+%	True if Number is the ISO number for Weekday.
 %	0 is Monday, 6 is Sunday.
-day_name(0, monday).
-day_name(1, tuesday).
-day_name(2, wednesday).
-day_name(3, thursday).
-day_name(4, friday).
-day_name(5, saturday).
-day_name(6, sunday).
+weekday_number(monday,    0).
+weekday_number(tuesday,   1).
+weekday_number(wednesday, 2).
+weekday_number(thursday,  3).
+weekday_number(friday,    4).
+weekday_number(saturday,  5).
+weekday_number(sunday,    6).
 
 
 %%	form_time(?Form, ?Datetime)
@@ -89,15 +91,18 @@ day_name(6, sunday).
 %
 %	Here are some values for Form.
 %
-%		* `today` represents the current day in local time
-%		* `sunday` (and other weekday names) represent the set of all
-%		  Sundays in history
-%		* `[foo,bar]` means that both `foo` and `bar`
-%		  constraints apply to this datetime
-%		* `gregorian(Year,Month,Day)`
-%		  constrains Datetime to something with the given representation
-%		  in the Gregorian calendar. For example, `gregorian(_,3,_)`
+%		* `today` - the set of all seconds in the local day
+%		* `now` - the current nanosecond
+%		* `sunday` - the set of all Sundays in history
+%		* `weekday(tuesday)` - the set of all Tuesdays in history
+%		* `unix(EpochSeconds)` - floating point seconds since the Unix
+%		  epoch
+%		* `[foo,bar]` - both `foo` and `bar` constraints apply
+%		* `gregorian(Year,Month,Day)` - all seconds in a Gregorian
+%		  date of the given form.  For example, `gregorian(_,3,_)`
 %		  represents the set of all the months of March in history.
+%       * `rfc3339(Text)` - the nanosecond indicated by the RFC 3339
+%         date string.  Text can be atom or codes.
 %
 %	As a demonstration, `july_fourth` constrains Datetime to
 %	the Fourth of July holiday in 1776 or later.
@@ -113,13 +118,12 @@ form_time(today, Dt) :-
 form_time(now, Dt) :-
     get_time(Now),
     form_time(unix(Now), Dt).
-form_time(DayOfWeek, Dt) :-     % day of week constraints
-    day_name(_, DayOfWeek),
-    !,
-    day_of_week(Dt, DayOfWeek).
-form_time(gregorian(Year, Month, Day), datetime(MJD,_Nano)) :-
+form_time(weekday(Weekday), datetime(MJD, _)) :-
+    (MJD+2) mod 7 #= DayNumber,
+    weekday_number(Weekday, DayNumber).
+form_time(gregorian(Year, Month, Day), Dt) :-
     gregorian(Year, Month, Day),
-    mjd(MJD),
+    datetime(Dt, MJD, _Nano),
     !,
     Y = 4716,
     V = 3,
@@ -148,7 +152,7 @@ form_time(gregorian(Year, Month, Day), datetime(MJD,_Nano)) :-
         labeling([leftmost, up, bisect], [MJD])
     ; true
     ).
-form_time(unix(UnixEpochSeconds), mjd(Days, Nanos)) :-
+form_time(unix(UnixEpochSeconds), datetime(Days, Nanos)) :-
     U = rationalize(UnixEpochSeconds),
     DaysBeforeUnixEpoch   = (24405875 rdiv 10),
     OffsetBetweenJDandMJD = (24000005 rdiv 10),
@@ -158,13 +162,14 @@ form_time(unix(UnixEpochSeconds), mjd(Days, Nanos)) :-
     MJD is (U rdiv 86400) + DaysBeforeUnixEpoch - OffsetBetweenJDandMJD,
     Days is floor(MJD),
     Nanos is floor((MJD - Days) * 86_400 * 1_000_000_000).
-form_time(rfc3339(Text), mjd(Days, Nanos)) :-
+form_time(rfc3339(Text), datetime(Days, Nanos)) :-
     text_codes(Text, Codes),
     phrase(rfc3339(Year,Month,Day,_,_,_,_), Codes),
-    form_time(gregorian(Year, Month, Day), mjd(Days,Nanos)).
-form_time(july_fourth, Datetime) :-
-    Y #>= 1776,
-    form_time(gregorian(Y,7,4), Datetime).
+    form_time(gregorian(Year, Month, Day), datetime(Days,Nanos)).
+form_time(Weekday, Dt) :-     % bare day of week constraints
+    weekday_number(Weekday, _),
+    !,
+    form_time(weekday(Weekday), Dt).
 
 
 :- begin_tests(acceptable_gregorian_dates).
