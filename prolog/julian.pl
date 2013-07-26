@@ -79,13 +79,13 @@ datetime(Dt) :-
 %
 %	True if Number is the ISO number for DayOfWeek.
 %	0 is Monday, 6 is Sunday.
-weekday_number(monday,    0).
-weekday_number(tuesday,   1).
-weekday_number(wednesday, 2).
-weekday_number(thursday,  3).
-weekday_number(friday,    4).
-weekday_number(saturday,  5).
-weekday_number(sunday,    6).
+dow_number(monday,    0).
+dow_number(tuesday,   1).
+dow_number(wednesday, 2).
+dow_number(thursday,  3).
+dow_number(friday,    4).
+dow_number(saturday,  5).
+dow_number(sunday,    6).
 
 
 %%	form_time(?Form, ?Datetime)
@@ -133,7 +133,7 @@ form_time(now, Dt) :-
 form_time(dow(DayOfWeek), datetime(MJD, _)) :-
     (MJD+2) mod 7 #= DayNumber,
     when( (ground(DayOfWeek) ; ground(DayNumber))
-        , weekday_number(DayOfWeek, DayNumber)
+        , dow_number(DayOfWeek, DayNumber)
         ),
     !.
 form_time(Year-Month-Day, Dt) :-
@@ -196,7 +196,7 @@ form_time(rfc3339(Codes), datetime(Days, Nanos)) :-
 %	True if a date exists which satisfies Form.  For example,
 %	"is May 1, 1979 a Tuesday?" would be
 %
-%	    form_time([1979-05-01,weekday(tuesday)])
+%	    form_time([1979-05-01,dow(tuesday)])
 form_time(Form) :-
     form_time(Form, _).
 
