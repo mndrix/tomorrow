@@ -1,7 +1,6 @@
 :- use_module(library(func)).
 :- use_module(library(readutil), [read_line_to_codes/2]).
 :- use_module(library(uri_qq)).
-:- use_module(library(dcg/basics), [float//1, integer//1, string//1]).
 
 
 :- [http, julian].
@@ -134,58 +133,6 @@ template_applicable(Task, retain) :-
     repeats(Task, Constraints),
     form_time([today|Constraints], _).
 
-
-text_codes(Text, Codes) :-
-    atom(Text),
-    !,
-    atom_codes(Text, Codes).
-text_codes(Text, Text) :-
-    is_list(Text).
-
-
-% padded_integer(W,N)//
-%
-% Describes a zero-padded integer N in a field exactly W characters
-% wide.
-padded_integer(W, N, A, B) :-
-    integer(W),
-    integer(N),
-    !,
-    number_codes(N, Numbers),
-    length(Numbers, NumbersLen),
-    plus(ZerosLen, NumbersLen, W),
-    length(Zeros, ZerosLen),
-    maplist(=(0'0), Zeros),
-    format(codes(A,B), '~s~s', [Zeros, Numbers]).
-padded_integer(W0,N) -->
-    "0",
-    !,
-    padded_integer(W,N),
-    { succ(W, W0) }.
-padded_integer(W,N) -->
-    integer(N),
-    { number_codes(N, Codes) },
-    { length(Codes, W) }.
-padded_integer(0, _) -->
-    [].
-
-
-rfc3339(Y,Mon,D,H,Min,S,Zone) -->
-    padded_integer(4, Y),
-    "-",
-    padded_integer(2, Mon),
-    "-",
-    padded_integer(2, D),
-    "T",
-    padded_integer(2, H),
-    ":",
-    padded_integer(2, Min),
-    ":",
-    float(S),
-    string(Zone),
-
-    % and it must be a valid gregorian date
-    { gregorian(Y,Mon,D) }.
 
 
 % TODO imlement this

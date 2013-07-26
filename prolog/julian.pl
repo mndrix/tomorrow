@@ -1,5 +1,6 @@
 /*
 :- module(julian, [ form_time/2
+                  , form_time/1
                   , day_of_week/2
                   , gregorian/3
                   , mjd/1
@@ -7,6 +8,8 @@
                   ]).
 */
 :- use_module(library(clpfd)).
+:- use_module(library(when), [when/2]).
+:- use_module(library(dcg/basics), [float//1, integer//1, string//1]).
 
 % This module represents times, dates and sets of those using
 % terms of the form =|datetime(MJD, Nano)|=.  =MJD= is an
@@ -46,19 +49,19 @@ gregorian(Y,M,D) :-
     #\/ (M #= 2 #/\ D #= 29 #/\ Y mod 4 #= 0 #/\ Y mod 100 #\= 0)
     ).
 
-%%	mjd(?MJD:integer) is det.
+%%	mjd(?MJD:integer) is semidet.
 %
 %	True if MJD is a valid modified Julian day number.
 mjd(MJD) :-
     MJD in -2400328 .. 514671.
 
-%%	nano(?Nano:integer) is det.
+%%	nano(?Nano:integer) is semidet.
 %
 %	True if Nano is a valid number of nanoseconds since midnight.
 nano(Nano) :-
     Nano in 0 .. 86_400_000_000_000.
 
-%%	datetime(?Datetime, ?MJD, ?Nano) is det.
+%%	datetime(?Datetime, ?MJD, ?Nano) is semidet.
 %
 %   True if Datetime falls on modified Julian day MJD and occurs Nano
 %   nanoseconds after midnight.
@@ -66,6 +69,11 @@ datetime(datetime(MJD, Nano), MJD, Nano) :-
     mjd(MJD),
     nano(Nano).
 
+%%	datetime(?Datetime) is semidet.
+%
+%	True if Datetime is a date time term.
+datetime(Dt) :-
+    datetime(Dt, _, _).
 
 %%	weekday_number(?Weekday:atom, ?Number:integer) is semidet.
 %
@@ -101,16 +109,20 @@ weekday_number(sunday,    6).
 %		* `gregorian(Year,Month,Day)` - all seconds in a Gregorian
 %		  date of the given form.  For example, `gregorian(_,3,_)`
 %		  represents the set of all the months of March in history.
+%       * `Year-Month-Day` - same as `gregorian(Year,Month,Day)`
+%       * `Hours:Minutes:Seconds`
 %       * `rfc3339(Text)` - the nanosecond indicated by the RFC 3339
 %         date string.  Text can be atom or codes.
-%
-%	As a demonstration, `july_fourth` constrains Datetime to
-%	the Fourth of July holiday in 1776 or later.
 %
 %	This predicate
 %	is multifile because other modules might support different
 %	calendars, different holiday schedules, etc.
 :- multifile form_time/2.
+form_time([], Dt) :-
+    datetime(Dt).
+form_time([H|T], Dt) :-
+    form_time(H, Dt),
+    form_time(T, Dt).
 form_time(today, Dt) :-
     get_time(Now),
     stamp_date_time(Now, date(Year, Month, Day, _,_,_,_,_,_), local),
@@ -120,7 +132,13 @@ form_time(now, Dt) :-
     form_time(unix(Now), Dt).
 form_time(weekday(Weekday), datetime(MJD, _)) :-
     (MJD+2) mod 7 #= DayNumber,
-    weekday_number(Weekday, DayNumber).
+    when( (ground(Weekday) ; ground(DayNumber))
+        , weekday_number(Weekday, DayNumber)
+        ),
+    !.
+form_time(Year-Month-Day, Dt) :-
+    !,
+    form_time(gregorian(Year,Month,Day), Dt).
 form_time(gregorian(Year, Month, Day), Dt) :-
     gregorian(Year, Month, Day),
     datetime(Dt, MJD, _Nano),
@@ -152,21 +170,96 @@ form_time(gregorian(Year, Month, Day), Dt) :-
         labeling([leftmost, up, bisect], [MJD])
     ; true
     ).
+form_time(Hours:Minutes:FloatSeconds, datetime(_, Nanos)) :-
+    Second = 1_000_000_000,
+    seconds_nanos(FloatSeconds, N),
+    Hours   in 0 .. 23,
+    Minutes in 0 .. 59,
+    N       in 0 .. 59_999_999_999,
+    Nanos #= Hours*60*60*Second + Minutes*60*Second + N.
 form_time(unix(UnixEpochSeconds), datetime(Days, Nanos)) :-
-    U = rationalize(UnixEpochSeconds),
-    DaysBeforeUnixEpoch   = (24405875 rdiv 10),
-    OffsetBetweenJDandMJD = (24000005 rdiv 10),
+    DayInNanos = 86_400_000_000_000,
+    seconds_nanos(UnixEpochSeconds, N),
+    ExtraDays #= N / DayInNanos,
+    ExtraNanos #= N rem DayInNanos,
 
-    % TODO nanosecond calculation is wrong
-    % TODO use clp(fd) to make this work in both directions
-    MJD is (U rdiv 86400) + DaysBeforeUnixEpoch - OffsetBetweenJDandMJD,
-    Days is floor(MJD),
-    Nanos is floor((MJD - Days) * 86_400 * 1_000_000_000).
-form_time(rfc3339(Text), datetime(Days, Nanos)) :-
-    text_codes(Text, Codes),
-    phrase(rfc3339(Year,Month,Day,_,_,_,_), Codes),
-    form_time(gregorian(Year, Month, Day), datetime(Days,Nanos)).
-form_time(Weekday, Dt) :-     % bare day of week constraints
-    weekday_number(Weekday, _),
+    % form_time([1970-01-01,00:00:00], datetime(40587,0))
+    Days #= 40587 + ExtraDays,
+    Nanos #= 0 + ExtraNanos.
+form_time(rfc3339(Codes), datetime(Days, Nanos)) :-
+    form_time([Y-Mon-D, H:Min:S], datetime(Days,Nanos)),
+    once(phrase(rfc3339(Y,Mon,D,H,Min,S,_), Codes)).
+
+
+%%	form_time(+Form) is semidet.
+%
+%	True if a date exists which satisfies Form.  For example,
+%	"is May 1, 1979 a Tuesday?" would be
+%
+%	    form_time([1979-05-01,weekday(tuesday)])
+form_time(Form) :-
+    form_time(Form, _).
+
+
+%%	seconds_nanos(?Seconds:float, ?Nanos:integer) is semidet.
+%
+%   True if Seconds is a floating point representation of Nanos
+%   nanoseconds.
+seconds_nanos(Seconds, Nanos) :-
+    when( (   ground(Seconds)
+          ;   ground(Nanos)
+          )
+        , seconds_nanos_(Seconds, Nanos)
+        ).
+seconds_nanos_(Seconds, Nanos) :-
+    number(Seconds),
     !,
-    form_time(weekday(Weekday), Dt).
+    Nanos is floor(Seconds * 1_000_000_000).
+seconds_nanos_(Seconds, Nanos) :-
+    integer(Nanos),
+    Seconds is Nanos / 1_000_000_000.
+
+
+% padded_integer(W,N)//
+%
+% Describes a zero-padded integer N in a field exactly W characters
+% wide.
+padded_integer(W, N, A, B) :-
+    integer(W),
+    integer(N),
+    !,
+    number_codes(N, Numbers),
+    length(Numbers, NumbersLen),
+    plus(ZerosLen, NumbersLen, W),
+    length(Zeros, ZerosLen),
+    maplist(=(0'0), Zeros),
+    format(codes(A,B), '~s~s', [Zeros, Numbers]).
+padded_integer(W0,N) -->
+    "0",
+    !,
+    padded_integer(W,N),
+    { succ(W, W0) }.
+padded_integer(W,N) -->
+    integer(N),
+    { number_codes(N, Codes) },
+    { length(Codes, W) }.
+padded_integer(0, _) -->
+    [].
+
+
+rfc3339(Y,Mon,D,H,Min,S,Zone) -->
+    padded_integer(4, Y),
+    "-",
+    padded_integer(2, Mon),
+    "-",
+    padded_integer(2, D),
+    "T",
+    padded_integer(2, H),
+    ":",
+    padded_integer(2, Min),
+    ":",
+    ( float(S) ; integer(S) ),
+    string(Zone),
+
+    % and it must be a valid gregorian date
+    { gregorian(Y,Mon,D) }.
