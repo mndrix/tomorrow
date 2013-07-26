@@ -170,31 +170,3 @@ form_time(Weekday, Dt) :-     % bare day of week constraints
     weekday_number(Weekday, _),
     !,
     form_time(weekday(Weekday), Dt).
-
-
-:- begin_tests(acceptable_gregorian_dates).
-test(march_16_2013) :-
-    gregorian(2013,3,16).
-
-% leap year rules
-test(1900, [fail]) :-
-    gregorian(1900,2,29).
-test(2000) :-
-    gregorian(2012,2,29).
-test(2012) :-
-    gregorian(2012,2,29).
-test(2013, [fail]) :-
-    gregorian(2013,2,29).
-test(2014, [fail]) :-
-    gregorian(2014,2,29).
-test(2016) :-
-    gregorian(2016,2,29).
-:- end_tests(acceptable_gregorian_dates).
-
-
-:- begin_tests(gregorian_conversion).
-test(march_16_2013) :-
-    form_time(gregorian(2013,3,16), datetime(56367, _)).
-test(unix_epoch) :-
-    form_time(gregorian(1970,1,1), datetime(40587, _)).
-:- end_tests(gregorian_conversion).
