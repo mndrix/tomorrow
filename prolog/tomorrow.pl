@@ -69,8 +69,8 @@ main(_) :-
 
     specialize_template(Template, Task),
     % TODO for debugging
-    format('~nwould have inserted to Today: ~w~n', [Task]),
-    fail,
+    %format('would have inserted to Today: ~w~n', [Task]),
+    %fail,
     insert_task(AccessToken, Today, Task, Inserted),
     write_quoted(Inserted),
     nl,
@@ -259,7 +259,7 @@ json_task(Item, Task) :-
     json_get(Item, title, Title),
     ( json_get(Item, notes, Notes) -> true; Notes='' ),
     ( json_get(Item, due, RFC3339) ->
-        form_time(rfc3339(RFC3339), Due)
+        form_time(rfc3339(atom_codes $ RFC3339), Due)
     ; % otherwise ->
         Due=''
     ),
