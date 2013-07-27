@@ -37,6 +37,11 @@ due(task(_,_,_,X,_), X).
 status(task(_,_,_,_,X), X).
 
 % setters
+notes( task(Id,Title,NotesOld,Due,Status)
+     , NotesOld
+     , NotesNew
+     , task(Id,Title,NotesNew,Due,Status)
+     ).
 due( task(Id,Title,Notes,DueOld,Status)
    , DueOld
    , DueNew
@@ -61,9 +66,11 @@ main(_) :-
     % tasks in the Future list
     task(AccessToken, Future, Template),
     template_applicable(Template, Status),
-    fail, % TODO remove after debugging
 
     specialize_template(Template, Task),
+    % TODO for debugging
+    format('~nwould have inserted to Today: ~w~n', [Task]),
+    fail,
     insert_task(AccessToken, Today, Task, Inserted),
     write_quoted(Inserted),
     nl,
@@ -111,9 +118,15 @@ delete_task(AccessToken, TaskList, Task) :-
     http_delete(Uri,_).
 
 
-
 specialize_template(Template, Task) :-
-    due(Template, _, '', Task).
+    % remove due date
+    due(Template, _, '', Task0),
+
+    % remove repetition rule from notes
+    repeats(Task0, _Rule, Lines),
+    maplist(atom_codes, Atoms, Lines),
+    atomic_list_concat(Atoms, '\n', Notes),
+    notes(Task0, _, Notes, Task).
 
 
 %%  template_applicable(+Template:task, -Status:atom)
@@ -124,7 +137,7 @@ specialize_template(Template, Task) :-
 template_applicable(Task, delete) :-
     % bare tasks always belong in Today
     due(Task, ''),
-    repeats(Task, "").
+    repeats(Task, "", _).
 template_applicable(Task, delete) :-
     % task is due today
     due(Task, Due),
@@ -132,30 +145,40 @@ template_applicable(Task, delete) :-
 template_applicable(Task, retain) :-
     % task schedule falls on today
     due(Task, ''),
-    repeats(Task, English),
+    repeats(Task, English, _),
     english_constraints(English, Constraints),
     format('Recognized repetition: ~s~n', [English]),
     form_time([today|Constraints]),
-    format('    => ~w~n', [Constraints]),
-    fail.  % TODO remove after debugging
+    format('    => ~w~n', [Constraints]).
 
 
-
-repeats(Task, English) :-
-    phrase(repeat_on(Phrase), atom_codes $ notes $ Task, _),
+repeats(Task, Rule, Others) :-
+    phrase(repeat_on(Rule0, Others0), atom_codes $ notes $ Task, _),
     !,
-    English = Phrase.
-repeats(_, "").
+    Rule = Rule0,
+    Others = Others0.
+repeats(_, "", []).
 
-repeat_on(English) -->
+repeat_on(Rule, [], [], []) :-
+    ( var(Rule) ->
+        Rule = ""
+    ; % otherwise ->
+        true
+    ).
+repeat_on(Rule, Others) -->
     "Repeat on ",
     string_without("\n", RestOfLine),
     !,
-    { English = RestOfLine }.
-repeat_on(English) -->
-    string_without("\n", _),
-    "\n",
-    repeat_on(English).
+    ( "\n" ; end_of_content ),
+    { Rule = RestOfLine },
+    repeat_on(Rule, Others).
+repeat_on(Rule, [Line|Others]) -->
+    string_without("\n", Line),
+    ( "\n" ; end_of_content ),
+    repeat_on(Rule, Others).
+
+
+end_of_content([],[]).
 
 
 % TODO make string//1 an argument like Separator
