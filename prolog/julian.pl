@@ -224,27 +224,38 @@ seconds_nanos_(Seconds, Nanos) :-
 %
 % Describes a zero-padded integer N in a field exactly W characters
 % wide.
-padded_integer(W, N, A, B) :-
-    integer(W),
-    integer(N),
-    !,
-    number_codes(N, Numbers),
-    length(Numbers, NumbersLen),
-    plus(ZerosLen, NumbersLen, W),
-    length(Zeros, ZerosLen),
-    maplist(=(0'0), Zeros),
-    format(codes(A,B), '~s~s', [Zeros, Numbers]).
-padded_integer(W0,N) -->
-    "0",
-    !,
-    padded_integer(W,N),
-    { succ(W, W0) }.
 padded_integer(W,N) -->
+    { digit_len(N, DigitLen) },
+    { lazy_plus(PadLen, DigitLen, W) },
+    count(PadLen, 0'0),
     integer(N),
-    { number_codes(N, Codes) },
-    { length(Codes, W) }.
-padded_integer(0, _) -->
-    [].
+    !.
+
+
+count(N0, X) -->
+    { when( (ground(N);ground(N0)),succ(N, N0)) },
+    [X],
+    count(N, X).
+count(0, _, L, L).
+
+
+digit_len(N, Length) :-
+    when(ground(N), digit_len_(N,Length)).
+digit_len_(N, Length) :-
+    ( N =:= 0 ->
+        Length = 1
+    ; % otherwise ->
+        Length is floor(log10(N)) + 1
+    ).
+
+
+lazy_plus(X,Y,Z) :-
+    when( ( (ground(X),ground(Y))
+          ; (ground(X),ground(Z))
+          ; (ground(Y),ground(Z))
+          )
+        , plus(X,Y,Z)
+        ).
 
 
 rfc3339(Y,Mon,D,H,Min,S,Zone) -->
