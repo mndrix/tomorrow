@@ -142,13 +142,16 @@ template_applicable(Task, retain) :-
 
 
 repeats(Task, English) :-
-    phrase(repeat_on(English), atom_codes $ notes $ Task, _),
-    !.
+    phrase(repeat_on(Phrase), atom_codes $ notes $ Task, _),
+    !,
+    English = Phrase.
 repeats(_, "").
 
 repeat_on(English) -->
     "Repeat on ",
-    string_without("\n", English).
+    string_without("\n", RestOfLine),
+    !,
+    { English = RestOfLine }.
 repeat_on(English) -->
     string_without("\n", _),
     "\n",
