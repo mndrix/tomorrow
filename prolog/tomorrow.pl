@@ -200,6 +200,13 @@ comma --> ", ".
 comma --> ",".
 
 
+% True if Day is an atom representing the day of week named in Codes
+codes_dow(Codes, Day) :-
+    atom_codes(Atom, Codes),
+    downcase_atom(Atom, Day),
+    dow_number(Day, _).
+
+
 repetition(dow(Day)) -->
     "weekday",
     !,
@@ -208,9 +215,7 @@ repetition(dow(Day)) -->
 repetition(dow(Day)) -->
     string(Word),
     end_of_content,
-    { atom_codes(Atom, Word) },
-    { downcase_atom(Atom, Day) },
-    { dow_number(Day, _) },
+    { codes_dow(Word, Day) },
     !.
 
 
