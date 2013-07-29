@@ -7,6 +7,10 @@ phrase(repetition(dow(monday)),"Monday").
 phrase(repetition(dow(thursday)),"thursday").
 
 
+'jibberish after day of week'(fail) :-
+    phrase(repetition(dow(friday)),"friday is fun").
+
+
 weekday :-
     phrase(repetition(X), "weekday"),
     forall( member(Day,[monday,tuesday,wednesday,thursday,friday])
