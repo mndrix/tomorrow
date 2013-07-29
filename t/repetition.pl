@@ -3,14 +3,14 @@
 :- use_module(library(tap)).
 
 % simple day of the week names
-english_constraints("Monday", [dow(monday)]).
-english_constraints("monday", [dow(monday)]).
+phrase(repetition(dow(monday)),"Monday").
+phrase(repetition(dow(thursday)),"thursday").
 
 
 weekday :-
-    english_constraints("weekday", X),
+    phrase(repetition(X), "weekday"),
     forall( member(Day,[monday,tuesday,wednesday,thursday,friday])
-          , X = [dow(Day)]
+          , X = dow(Day)
           ),
-    X \= [dow(saturday)],
-    X \= [dow(sunday)].
+    X \= dow(saturday),
+    X \= dow(sunday).

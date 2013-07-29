@@ -146,7 +146,7 @@ template_applicable(Task, retain) :-
     % task schedule falls on today
     due(Task, ''),
     repeats(Task, English, _),
-    english_constraints(English, Constraints),
+    phrase(repetition(Constraints), English),
     format('Recognized repetition: ~s~n', [English]),
     form_time([today|Constraints]),
     format('    => ~w~n', [Constraints]).
@@ -195,18 +195,23 @@ comma --> ", ".
 comma --> ",".
 
 
-english_constraints("weekday", [dow(Day)]) :-
+repetition(dow(Day)) -->
+    "weekday",
     !,
-    Weekdays = [monday,tuesday,wednesday,thursday,friday],
-    when(ground(Day), memberchk(Day, Weekdays)).
-english_constraints(English, [dow(Day)]) :-
-    atom_codes(Atom, English),
-    downcase_atom(Atom, Day),
-    dow_number(Day, _),
+    { Weekdays = [monday,tuesday,wednesday,thursday,friday] },
+    { when(ground(Day), memberchk(Day, Weekdays)) }.
+repetition(dow(Day)) -->
+    string(Word),
+    end_of_content,
+    { atom_codes(Atom, Word) },
+    { downcase_atom(Atom, Day) },
+    { dow_number(Day, _) },
     !.
-english_constraints(English, _) :-
-    format('Unknown repetition: ~s~n', [English]),
-    fail.
+repetition(_) -->
+    string(Word),
+    end_of_content,
+    { format('Unknown repetition: ~s~n', [Word]) },
+    { fail }.
 
 
 % tasklist(+AccessToken, -TaskList) is nondet.
