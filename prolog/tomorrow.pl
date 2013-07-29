@@ -146,10 +146,15 @@ template_applicable(Task, retain) :-
     % task schedule falls on today
     due(Task, ''),
     repeats(Task, English, _),
-    phrase(repetition(Constraints), English),
-    format('Recognized repetition: ~s~n', [English]),
-    form_time([today|Constraints]),
-    format('    => ~w~n', [Constraints]).
+    English \= "",
+    ( phrase(repetition(Constraints), English) ->
+        format('Recognized repetition: ~s~n', [English]),
+        form_time([today|Constraints]),
+        format('    => ~w~n', [Constraints])
+    ; % otherwise ->
+        format('Unknown repetition: ~s~n', [English]),
+        fail
+    ).
 
 
 repeats(Task, Rule, Others) :-
@@ -207,11 +212,6 @@ repetition(dow(Day)) -->
     { downcase_atom(Atom, Day) },
     { dow_number(Day, _) },
     !.
-repetition(_) -->
-    string(Word),
-    end_of_content,
-    { format('Unknown repetition: ~s~n', [Word]) },
-    { fail }.
 
 
 % tasklist(+AccessToken, -TaskList) is nondet.
