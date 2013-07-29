@@ -16,5 +16,6 @@ weekday :-
     forall( member(Day,[monday,tuesday,wednesday,thursday,friday])
           , X = dow(Day)
           ),
-    X \= dow(saturday),
-    X \= dow(sunday).
+    forall( member(Day,[saturday, sunday])
+          , X \= dow(Day)
+          ).
