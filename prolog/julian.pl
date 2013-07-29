@@ -103,6 +103,7 @@ dow_number(sunday,    6).
 %		* `now` - the current nanosecond
 %		* `sunday` - the set of all Sundays in history
 %		* `dow(tuesday)` - the set of all Tuesdays in history
+%		* `dow([saturday,sunday])` - set of all weekends in history
 %		* `unix(EpochSeconds)` - floating point seconds since the Unix
 %		  epoch
 %		* `[foo,bar]` - both `foo` and `bar` constraints apply
@@ -130,6 +131,13 @@ form_time(today, Dt) :-
 form_time(now, Dt) :-
     get_time(Now),
     form_time(unix(Now), Dt).
+form_time(dow(Days), Dt) :-
+    ground(Days),
+    maplist(dow_number, Days, _),
+    datetime(Dt, _, _),
+    !,
+    when(ground(Day), memberchk(Day,Days)),
+    form_time(dow(Day), Dt).
 form_time(dow(DayOfWeek), datetime(MJD, _)) :-
     (MJD+2) mod 7 #= DayNumber,
     when( (ground(DayOfWeek) ; ground(DayNumber))

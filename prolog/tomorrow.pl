@@ -208,21 +208,18 @@ codes_dow(Codes, Day) :-
     dow_number(Day, _).
 
 
-repetition(dow(Day)) -->
+repetition(dow([monday,tuesday,wednesday,thursday,friday])) -->
     "weekday",
-    !,
-    { Weekdays = [monday,tuesday,wednesday,thursday,friday] },
-    { when(ground(Day), memberchk(Day, Weekdays)) }.
+    !.
 repetition(dow(Day)) -->
     string(Word),
     end_of_content,
     { codes_dow(Word, Day) },
     !.
-repetition(dow(Day)) -->
+repetition(dow(Days)) -->
     split(comma, Words),
     { maplist(codes_dow, Words, Days) },
-    !,
-    { when(ground(Day), memberchk(Day, Days)) }.
+    !.
 
 
 % tasklist(+AccessToken, -TaskList) is nondet.

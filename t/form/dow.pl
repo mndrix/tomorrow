@@ -3,13 +3,23 @@
 :- use_module(library(tap)).
 
 
-'weekday(thursday), forward' :-
+'dow(thursday), forward' :-
     form_time(gregorian(1970,1,1), Dt),
     form_time(dow(thursday), Dt).
-'weekday(thursday), backward' :-
+'dow(thursday), backward' :-
     form_time(gregorian(1970,1,1), Dt),
     form_time(dow(Weekday), Dt),
     Weekday = thursday.
-'weekday(thursday), compound' :-
+'dow(thursday), compound' :-
     form_time([dow(Weekday), gregorian(1970,1,1)], _),
     Weekday = thursday.
+
+
+'several days' :-
+    form_time(dow([monday,tuesday]), Dt),
+    forall( member(YMD,[2013-07-29, 2013-07-30])
+          , form_time(YMD, Dt)
+          ),
+    forall( member(YMD,[2013-07-28])
+          , \+ form_time(YMD, Dt)
+          ).

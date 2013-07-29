@@ -18,19 +18,9 @@ empty(fail) :-
 
 weekday :-
     phrase(repetition(X), "weekday"),
-    forall( member(Day,[monday,tuesday,wednesday,thursday,friday])
-          , X = dow(Day)
-          ),
-    forall( member(Day,[saturday, sunday])
-          , X \= dow(Day)
-          ).
+    X == dow([monday,tuesday,wednesday,thursday,friday]).
 
 
 'days of the week list' :-
-    phrase(repetition(X), "monday, tuesday or thursday"),
-    forall( member(Day,[monday,tuesday,thursday])
-          , X = dow(Day)
-          ),
-    forall( member(Day,[wednesday,friday,saturday,sunday])
-          , X \= dow(Day)
-          ).
+    phrase(repetition(X), "monday, Tuesday or thursday"),
+    X == dow([monday,tuesday,thursday]).
