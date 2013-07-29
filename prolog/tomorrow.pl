@@ -196,6 +196,7 @@ split(_, [Part], Part, []).
 
 
 comma --> " and ".
+comma --> " or ".
 comma --> ", ".
 comma --> ",".
 
@@ -217,6 +218,11 @@ repetition(dow(Day)) -->
     end_of_content,
     { codes_dow(Word, Day) },
     !.
+repetition(dow(Day)) -->
+    split(comma, Words),
+    { maplist(codes_dow, Words, Days) },
+    !,
+    { when(ground(Day), memberchk(Day, Days)) }.
 
 
 % tasklist(+AccessToken, -TaskList) is nondet.
