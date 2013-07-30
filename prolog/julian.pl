@@ -10,6 +10,7 @@
 :- use_module(library(clpfd)).
 :- use_module(library(when), [when/2]).
 :- use_module(library(dcg/basics), [float//1, integer//1, string//1]).
+:- use_module(library(list_util), [xfy_list/3]).
 
 % This module represents times, dates and sets of those using
 % terms of the form =|datetime(MJD, Nano)|=.  =MJD= is an
@@ -136,11 +137,13 @@ form_time(now, Dt) :-
     form_time(unix(Now), Dt).
 form_time(dow(Days), Dt) :-
     ground(Days),
-    maplist(dow_number, Days, _),
-    datetime(Dt, _, _),
+    maplist(dow_number, Days, DayNumbers),
+    datetime(Dt, MJD, _),
     !,
-    when(ground(Day), memberchk(Day,Days)),
-    form_time(dow(Day), Dt).
+    % compile DayNumbers into clpfd domain constraint
+    xfy_list(\/, Domain, DayNumbers),
+    DayNumber in Domain,
+    (MJD+2) mod 7 #= DayNumber.
 form_time(weekday, Dt) :-
     datetime(Dt,MJD,_),
     DayNumber in 0..4,
