@@ -104,6 +104,7 @@ dow_number(sunday,    6).
 %		* `sunday` - the set of all Sundays in history
 %		* `dow(tuesday)` - the set of all Tuesdays in history
 %		* `dow([saturday,sunday])` - set of all weekends in history
+%		* `weekday` - like `dow([monday,...,friday])` but faster
 %		* `unix(EpochSeconds)` - floating point seconds since the Unix
 %		  epoch
 %		* `[foo,bar]` - both `foo` and `bar` constraints apply
@@ -138,6 +139,10 @@ form_time(dow(Days), Dt) :-
     !,
     when(ground(Day), memberchk(Day,Days)),
     form_time(dow(Day), Dt).
+form_time(weekday, Dt) :-
+    datetime(Dt,MJD,_),
+    DayNumber in 0..4,
+    (MJD+2) mod 7 #= DayNumber.
 form_time(dow(DayOfWeek), datetime(MJD, _)) :-
     (MJD+2) mod 7 #= DayNumber,
     when( (ground(DayOfWeek) ; ground(DayNumber))
