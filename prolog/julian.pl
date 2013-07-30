@@ -115,6 +115,8 @@ dow_number(sunday,    6).
 %       * `Hours:Minutes:Seconds`
 %       * `rfc3339(Text)` - the nanosecond indicated by the RFC 3339
 %         date string.  Text can be atom or codes.
+%       * `nth(N,Form)` - Nth day (1-based) that matches Form in the
+%         month
 %
 %	This predicate
 %	is multifile because other modules might support different
@@ -199,6 +201,15 @@ form_time(unix(UnixEpochSeconds), datetime(Days, Nanos)) :-
     % form_time([1970-01-01,00:00:00], datetime(40587,0))
     Days #= 40587 + ExtraDays,
     Nanos #= 0 + ExtraNanos.
+form_time(nth(N,Form), Dt) :-
+    N > 0,
+    nonvar(Form),
+    datetime(Dt, _, _),
+    !,
+    form_time(Year-Month-_, Dt),
+    form_time([Year-Month-_, Form], X),
+    findall_dates(X, Dates),
+    nth1(N, Dates, Dt).
 form_time(rfc3339(Codes), datetime(Days, Nanos)) :-
     form_time([Y-Mon-D, H:Min:S], datetime(Days,Nanos)),
     once(phrase(rfc3339(Y,Mon,D,H,Min,S,_), Codes)).
@@ -212,6 +223,21 @@ form_time(rfc3339(Codes), datetime(Days, Nanos)) :-
 %	    form_time([1979-05-01,dow(tuesday)])
 form_time(Form) :-
     form_time(Form, _).
+
+
+%%	findall_dates(+Dt, -Dts:list)
+%
+%   True if Dts is all individual days in the set Dt. Dts is in order
+%   from oldest to most recent.
+findall_dates(Dt, Dts) :-
+    findall(Dt, date(Dt), Dts).
+
+%%	date(?Dt) is nondet.
+%
+%	Assign a single date based on the constraints of Dt.
+date(Dt) :-
+    datetime(Dt, MJD, _),
+    labeling([leftmost,up,bisect], [MJD]).
 
 
 %%	seconds_nanos(?Seconds:float, ?Nanos:integer) is semidet.
