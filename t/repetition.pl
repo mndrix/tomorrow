@@ -18,7 +18,7 @@ empty(fail) :-
 
 weekday :-
     phrase(repetition(X), "weekday"),
-    X == dow([monday,tuesday,wednesday,thursday,friday]).
+    X == weekday.
 
 
 'days of the week list' :-

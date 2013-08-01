@@ -218,7 +218,7 @@ codes_dow(Codes, Day) :-
 repetition(true) -->
     "each day",
     !.
-repetition(dow([monday,tuesday,wednesday,thursday,friday])) -->
+repetition(weekday) -->
     "weekday",
     !.
 repetition(dow(Day)) -->
