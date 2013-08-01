@@ -24,3 +24,8 @@ weekday :-
 'days of the week list' :-
     phrase(repetition(X), "monday, Tuesday or thursday"),
     X == dow([monday,tuesday,thursday]).
+
+
+'second tuesday' :-
+    phrase(repetition(X), "second tuesday"),
+    X == nth(2, dow(tuesday)).

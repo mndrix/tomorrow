@@ -201,6 +201,13 @@ comma --> ", ".
 comma --> ",".
 
 
+ordinal(1) --> "first".
+ordinal(2) --> "second".
+ordinal(3) --> "third".
+ordinal(4) --> "fourth".
+ordinal(5) --> "fifth".
+
+
 % True if Day is an atom representing the day of week named in Codes
 codes_dow(Codes, Day) :-
     atom_codes(Atom, Codes),
@@ -219,6 +226,11 @@ repetition(dow(Day)) -->
 repetition(dow(Days)) -->
     split(comma, Words),
     { maplist(codes_dow, Words, Days) },
+    !.
+repetition(nth(N,Form)) -->
+    ordinal(N),
+    " ",
+    repetition(Form),
     !.
 
 
