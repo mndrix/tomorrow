@@ -95,6 +95,30 @@ dow_number_(saturday,  5).
 dow_number_(sunday,    6).
 
 
+%%	month_number(+Month:atom, -Number:integer) is semidet.
+%%	month_number(-Month:atom, +Number:integer) is semidet.
+%%	month_number(-Month:atom, -Number:integer) is det.
+%
+%   True if Number is the number for Month. 1 is January, 12 is
+%   December.
+month_number(Month, Number) :-
+    when( ( ground(Month) ; ground(Number) )
+        , month_number_(Month, Number)
+        ).
+month_number_(january,   1).
+month_number_(february,  2).
+month_number_(march,     3).
+month_number_(april,     4).
+month_number_(may,       5).
+month_number_(june,      6).
+month_number_(july,      7).
+month_number_(august,    8).
+month_number_(september, 9).
+month_number_(october,  10).
+month_number_(november, 11).
+month_number_(december, 12).
+
+
 %%	form_time(?Form, ?Datetime)
 %
 %	True if Datetime can be described by Form.  Form is
@@ -112,6 +136,8 @@ dow_number_(sunday,    6).
 %		* `dow(tuesday)` - the set of all Tuesdays in history
 %		* `dow([saturday,sunday])` - set of all weekends in history
 %		* `weekday` - like `dow([monday,...,friday])` but faster
+%		* `month(july)` - the set of all Julys in history
+%		* `month([june,july])` - the set of all Junes and Julys ever
 %		* `unix(EpochSeconds)` - floating point seconds since the Unix
 %		  epoch
 %		* `[foo,bar]` - both `foo` and `bar` constraints apply
@@ -162,6 +188,18 @@ form_time(dow(DayOfWeek), datetime(MJD, _)) :-
     (MJD+2) mod 7 #= DayNumber,
     dow_number(DayOfWeek, DayNumber),
     !.
+form_time(month(Months), Dt) :-
+    ground(Months),
+    datetime(Dt),
+    maplist(month_number, Months, MonthNumbers),
+    !,
+    % compile MonthNumbers into clpfd domain constraint
+    xfy_list(\/, Domain, MonthNumbers),
+    MonthNumber in Domain,
+    form_time(gregorian(_,MonthNumber,_), Dt).
+form_time(month(Month), Dt) :-
+    month_number(Month, Number),
+    form_time(gregorian(_,Number,_), Dt).
 form_time(Year-Month-Day, Dt) :-
     !,
     form_time(gregorian(Year,Month,Day), Dt).
