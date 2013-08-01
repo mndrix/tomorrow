@@ -76,17 +76,23 @@ datetime(datetime(MJD, Nano), MJD, Nano) :-
 datetime(Dt) :-
     datetime(Dt, _, _).
 
-%%	dow_number(?DayOfWeek:atom, ?Number:integer) is semidet.
+%%	dow_number(+DayOfWeek:atom, -Number:integer) is semidet.
+%%	dow_number(-DayOfWeek:atom, +Number:integer) is semidet.
+%%	dow_number(-DayOfWeek:atom, -Number:integer) is det.
 %
 %	True if Number is the ISO number for DayOfWeek.
 %	0 is Monday, 6 is Sunday.
-dow_number(monday,    0).
-dow_number(tuesday,   1).
-dow_number(wednesday, 2).
-dow_number(thursday,  3).
-dow_number(friday,    4).
-dow_number(saturday,  5).
-dow_number(sunday,    6).
+dow_number(DayOfWeek, Number) :-
+    when( ( ground(DayOfWeek) ; ground(Number) )
+        , dow_number_(DayOfWeek, Number)
+        ).
+dow_number_(monday,    0).
+dow_number_(tuesday,   1).
+dow_number_(wednesday, 2).
+dow_number_(thursday,  3).
+dow_number_(friday,    4).
+dow_number_(saturday,  5).
+dow_number_(sunday,    6).
 
 
 %%	form_time(?Form, ?Datetime)
@@ -154,9 +160,7 @@ form_time(weekday, Dt) :-
     (MJD+2) mod 7 #= DayNumber.
 form_time(dow(DayOfWeek), datetime(MJD, _)) :-
     (MJD+2) mod 7 #= DayNumber,
-    when( (ground(DayOfWeek) ; ground(DayNumber))
-        , dow_number(DayOfWeek, DayNumber)
-        ),
+    dow_number(DayOfWeek, DayNumber),
     !.
 form_time(Year-Month-Day, Dt) :-
     !,
