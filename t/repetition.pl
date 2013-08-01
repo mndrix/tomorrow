@@ -29,3 +29,7 @@ weekday :-
 'second tuesday' :-
     phrase(repetition(X), "second tuesday"),
     X == nth(2, dow(tuesday)).
+
+'each day' :-
+    phrase(repetition(X), "each day"),
+    X == true.

@@ -118,6 +118,7 @@ dow_number(sunday,    6).
 %         date string.  Text can be atom or codes.
 %       * `nth(N,Form)` - Nth day (1-based) that matches Form in the
 %         month
+%       * `true` - noop constraint that matches all dates
 %
 %	This predicate
 %	is multifile because other modules might support different
@@ -128,6 +129,9 @@ form_time([], Dt) :-
 form_time([H|T], Dt) :-
     form_time(H, Dt),
     form_time(T, Dt).
+form_time(true, Dt) :-
+    !,
+    datetime(Dt).
 form_time(today, Dt) :-
     get_time(Now),
     stamp_date_time(Now, date(Year, Month, Day, _,_,_,_,_,_), local),
