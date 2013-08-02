@@ -151,6 +151,7 @@ month_number_(december, 12).
 %       * `nth(N,Form)` - Nth day (1-based) that matches Form in the
 %         month
 %       * `true` - noop constraint that matches all dates
+%       * `mjn(Mjn)` - modified Julian nanoseconds
 %
 %	This predicate
 %	is multifile because other modules might support different
@@ -250,6 +251,10 @@ form_time(unix(UnixEpochSeconds), datetime(Days, Nanos)) :-
     % form_time([1970-01-01,00:00:00], datetime(40587,0))
     Days #= 40587 + ExtraDays,
     Nanos #= 0 + ExtraNanos.
+form_time(mjn(Mjn), Dt) :-
+    datetime(Dt, Mjd, Nano),
+    DayInNanos = 86_400_000_000_000,
+    Mjn #= Mjd*DayInNanos + Nano.
 form_time(nth(N,Form), Dt) :-
     N > 0,
     nonvar(Form),
