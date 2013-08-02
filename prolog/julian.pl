@@ -447,3 +447,40 @@ choicepoints.  If there are multiple right answers, we want a choicepoint
 for each one.  The `findall(...),member(...)` construct behaves like that.
 
 */
+
+
+%%	delta_time(?A, ?Delta, ?B)
+%
+%	True if datetime A plus duration Delta equals datetime B.
+%	Delta is a compound term representing a duration in various
+%	convenient forms.  Acceptable forms are:
+%
+%	  * `days(Days)` - integer days (ignores all time components)
+%	  * `ns(Nanoseconds)` - integer nanoseconds
+%	  * `ms(Millis)` - integer milliseconds
+%	  * `s(Seconds)` - integer seconds
+delta_time(A0, Delta, B0) :-
+    ( var(A0) -> A=A0 ; form_time(A0, A) ),
+    ( var(B0) -> B=B0 ; form_time(B0, B) ),
+    delta_time_(A, Delta, B).
+
+delta_time_(A,days(Days),B) :-
+    datetime(A, MjdA, _),
+    datetime(B, MjdB, _),
+    Days #= MjdB - MjdA,
+    !.
+delta_time_(A,ns(Nanos),B) :-
+    form_time(mjn(MjnA), A),
+    form_time(mjn(MjnB), B),
+    Nanos #= MjnB - MjnA,
+    !.
+delta_time_(A,ms(Millis),B) :-
+    Millis #= Nanos / 1_000_000,
+    delta_time_(A,ns(Nanos),B),
+    once(label([Nanos])),  % decide rounding ambiguity
+    !.
+delta_time_(A,s(Seconds),B) :-
+    Seconds #= Nanos / 1_000_000_000,
+    delta_time_(A,ns(Nanos),B),
+    once(label([Nanos])),  % decide rounding ambiguity
+    !.
