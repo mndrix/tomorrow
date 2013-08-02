@@ -200,6 +200,7 @@ comma --> ", ".
 comma --> ",".
 
 
+within --> " during ".
 within --> " in ".
 
 
@@ -265,6 +266,9 @@ repetition(nth(N,Form)) -->
     " ",
     repetition(Form),
     !.
+% personal rules below here
+repetition(month([september,october,november,december,january,february,march,april])) -->
+    "school year".
 
 
 % tasklist(+AccessToken, -TaskList) is nondet.
