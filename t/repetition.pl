@@ -41,3 +41,8 @@ weekday :-
 'months list' :-
     phrase(repetition(X), "January, April, july and October"),
     X == month([january,april,july,october]).
+
+
+'day of week in month' :-
+    phrase(repetition(X), "second friday in May"),
+    X == [nth(2,dow(friday)), month(may)].

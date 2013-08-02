@@ -200,6 +200,9 @@ comma --> ", ".
 comma --> ",".
 
 
+within --> " in ".
+
+
 ordinal(1) --> "first".
 ordinal(2) --> "second".
 ordinal(3) --> "third".
@@ -244,6 +247,11 @@ repetition(month(Month)) -->
 repetition(month(Months)) -->
     split(comma, Words),
     { maplist(codes_month, Words, Months) },
+    !.
+repetition([FormA, FormB]) -->
+    split(within, [A,B]),
+    { phrase(repetition(FormA), A) },
+    { phrase(repetition(FormB), B) },
     !.
 repetition(nth(N,Form)) -->
     ordinal(N),
