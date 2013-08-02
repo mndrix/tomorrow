@@ -293,9 +293,11 @@ form_time(nth(N,Form), Dt) :-
     findall_dates(X, Dates),
     nth1(N, Dates, Dt).
 form_time(datetime(Mjd,Nano), datetime(Mjd,Nano)).
-form_time(rfc3339(Codes), datetime(Days, Nanos)) :-
-    form_time([Y-Mon-D, H:Min:S], datetime(Days,Nanos)),
-    once(phrase(rfc3339(Y,Mon,D,H,Min,S,_), Codes)).
+form_time(rfc3339(Codes), Dt) :-
+    form_time([Y-Mon-D, H:Min:S], Dt),
+    when( ( ground(Dt) ; ground(Codes) )
+        , once(phrase(rfc3339(Y,Mon,D,H,Min,S,_), Codes))
+        ).
 
 
 %%	form_time(+Form) is semidet.
