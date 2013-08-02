@@ -367,3 +367,43 @@ rfc3339(Y,Mon,D,H,Min,S,Zone) -->
 
     % and it must be a valid gregorian date
     { gregorian(Y,Mon,D) }.
+
+
+%%	compare_time(+Order, ?A:datetime, ?B:datetime) is semidet.
+%%  compare_time(-Order, ?A:datetime, ?B:datetime) is nondet.
+%
+%	True if the chronological relation between A and B is described by Order.
+%	None of the arguments needs to be bound.  When Order is not bound,
+%	compare_time/3 iterates all possible values of Order on backtracking.
+%	In other words, the relation is not stored as contraints on Order.
+compare_time(Order, A, B) :-
+    form_time(mjn(MjnA), A),
+    form_time(mjn(MjnB), B),
+    zcompare(Order, MjnA, MjnB),
+
+    % See Note_compare
+    ( var(Order) ->
+        findall(Order,member(Order,[<,=,>]), Orders),
+        member(Order, Orders)
+    ; % otherwise ->
+        true
+    ).
+
+/* Note_compare:
+
+Using zcompare/3 with modified Julian nanoseconds is the purest way to decribe
+the relationship between two times and an order.  In most circumstances, it
+works exactly as expected.  However, in some common cases like
+
+    form_time([2000-02-29], A),
+    form_time([1999-_-_], B),
+    compare(Order, A, B).
+
+zcompare/3 fails to notice that A must always be greater than B.  Fortunately,
+if we ask zcompare/3 "is it less? is it equal? is it greater?" it always
+answers correctly.  If that series of questions gets a single answer, we want
+to pretend that zcompare/3 found it by itself without leaving any extra
+choicepoints.  If there are multiple right answers, we want a choicepoint
+for each one.  The `findall(...),member(...)` construct behaves like that.
+
+*/
