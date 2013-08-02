@@ -25,3 +25,7 @@ formatting :-
 'formatting with fractional seconds' :-
     form_time(unix(1374876170.2), Dt), form_time(rfc3339(T), Dt),
     T = "2013-07-26T22:02:50.2".
+
+'formatting with zero seconds' :-
+    form_time(rfc3339(T), datetime(56220, 43260000000000)),
+    T == "2012-10-20T12:01:00".

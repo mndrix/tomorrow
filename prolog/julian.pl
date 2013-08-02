@@ -393,7 +393,7 @@ rfc3339(Y,Mon,D,H,Min,S,Zone) -->
     ":",
     padded_integer(2, Min),
     ":",
-    ( float(S) ; integer(S) ),
+    ( float(S) ; padded_integer(2, S) ),
     string(Zone),
 
     % and it must be a valid gregorian date
