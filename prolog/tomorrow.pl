@@ -248,7 +248,7 @@ repetition(month(Months)) -->
     split(comma, Words),
     { maplist(codes_month, Words, Months) },
     !.
-repetition([FormA, FormB]) -->
+repetition([FormB, FormA]) -->
     split(within, [A,B]),
     { phrase(repetition(FormA), A) },
     { phrase(repetition(FormB), B) },

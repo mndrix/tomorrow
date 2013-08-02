@@ -45,4 +45,4 @@ weekday :-
 
 'day of week in month' :-
     phrase(repetition(X), "second friday in May"),
-    X == [nth(2,dow(friday)), month(may)].
+    X == [month(may), nth(2,dow(friday))].
