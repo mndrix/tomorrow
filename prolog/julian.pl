@@ -146,6 +146,9 @@ month_number_(december, 12).
 %		  represents the set of all the months of March in history.
 %       * `Year-Month-Day` - same as `gregorian(Year,Month,Day)`
 %       * `Hours:Minutes:Seconds`
+%       * `midnight` - shortcut for `00:00:00`
+%       * `noon` - shortcut for `12:00:00`
+%       * `final_moment` - shortcut for `23:59:59.99999999999999`
 %       * `rfc3339(Text)` - the nanosecond indicated by the RFC 3339
 %         date string.  Text can be atom or codes.
 %       * `nth(N,Form)` - Nth day (1-based) that matches Form in the
@@ -242,6 +245,12 @@ form_time(Hours:Minutes:FloatSeconds, datetime(_, Nanos)) :-
     Minutes in 0 .. 59,
     N       in 0 .. 59_999_999_999,
     Nanos #= Hours*60*60*Second + Minutes*60*Second + N.
+form_time(midnight, Dt) :-
+    form_time(00:00:00, Dt).
+form_time(noon, Dt) :-
+    form_time(12:00:00, Dt).
+form_time(final_moment, Dt) :-
+    datetime(Dt, _, 86_399_999_999_999).
 form_time(unix(UnixEpochSeconds), datetime(Days, Nanos)) :-
     DayInNanos = 86_400_000_000_000,
     seconds_nanos(UnixEpochSeconds, N),
