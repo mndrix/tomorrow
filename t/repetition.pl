@@ -46,3 +46,8 @@ weekday :-
 'day of week in month' :-
     phrase(repetition(X), "second friday in May"),
     X == [month(may), nth(2,dow(friday))].
+
+
+'month name and year' :-
+    phrase(repetition(X), "August 2013"),
+    X = gregorian(2013,8,_).

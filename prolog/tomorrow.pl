@@ -248,6 +248,13 @@ repetition(month(Months)) -->
     split(comma, Words),
     { maplist(codes_month, Words, Months) },
     !.
+repetition(gregorian(Y,M,_)) -->
+    string(Word),
+    { codes_month(Word, Month) },
+    { month_number(Month, M) },
+    " ",
+    padded_integer(4, Y),
+    !.
 repetition([FormB, FormA]) -->
     split(within, [A,B]),
     { phrase(repetition(FormA), A) },
