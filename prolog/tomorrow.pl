@@ -148,11 +148,10 @@ template_applicable(Task, retain) :-
     repeats(Task, English, _),
     English \= "",
     ( phrase(repetition(Constraints), English) ->
-        format('Recognized repetition: ~s~n', [English]),
         form_time([today|Constraints]),
-        format('    => ~w~n', [Constraints])
+        format('~w =>~n', [Constraints])
     ; % otherwise ->
-        format('Unknown repetition: ~s~n', [English]),
+        format('Unknown repetition: "~s"~n', [English]),
         fail
     ).
 
