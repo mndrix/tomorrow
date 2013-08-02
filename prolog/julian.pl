@@ -158,6 +158,7 @@ month_number_(december, 12).
 %       * `nth(N,Form)` - Nth day (1-based) that matches Form in the
 %         month
 %       * `true` - noop constraint that matches all dates
+%       * `Datetime` - a datetime itself can be used as a form
 %       * `mjn(Mjn)` - modified Julian nanoseconds
 %
 %	This predicate
@@ -291,6 +292,7 @@ form_time(nth(N,Form), Dt) :-
     form_time([Year-Month-_, Form], X),
     findall_dates(X, Dates),
     nth1(N, Dates, Dt).
+form_time(datetime(Mjd,Nano), datetime(Mjd,Nano)).
 form_time(rfc3339(Codes), datetime(Days, Nanos)) :-
     form_time([Y-Mon-D, H:Min:S], datetime(Days,Nanos)),
     once(phrase(rfc3339(Y,Mon,D,H,Min,S,_), Codes)).
