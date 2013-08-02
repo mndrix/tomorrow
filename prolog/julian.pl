@@ -164,6 +164,10 @@ month_number_(december, 12).
 %	is multifile because other modules might support different
 %	calendars, different holiday schedules, etc.
 :- multifile form_time/2.
+form_time(Var, _) :-
+    var(Var),
+    !,
+    throw('form_time/2 doesn''t yet support a variable first argument').
 form_time([], Dt) :-
     datetime(Dt).
 form_time([H|T], Dt) :-
