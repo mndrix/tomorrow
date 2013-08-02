@@ -60,7 +60,7 @@ mjd(MJD) :-
 %
 %	True if Nano is a valid number of nanoseconds since midnight.
 nano(Nano) :-
-    Nano in 0 .. 86_400_000_000_000.
+    Nano in 0 .. 86_399_999_999_999.
 
 %%	datetime(?Datetime, ?MJD, ?Nano) is semidet.
 %
