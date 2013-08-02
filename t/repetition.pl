@@ -33,3 +33,11 @@ weekday :-
 'each day' :-
     phrase(repetition(X), "each day"),
     X == true.
+
+
+'single month' :-
+    phrase(repetition(X), "August"),
+    X == month(august).
+'months list' :-
+    phrase(repetition(X), "January, April, july and October"),
+    X == month([january,april,july,october]).

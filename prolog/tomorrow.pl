@@ -214,6 +214,13 @@ codes_dow(Codes, Day) :-
     dow_number(Day, _).
 
 
+% True if Month is an atom representing the month named in Codes
+codes_month(Codes, Month) :-
+    atom_codes(Atom, Codes),
+    downcase_atom(Atom, Month),
+    month_number(Month, _).
+
+
 repetition(true) -->
     "each day",
     !.
@@ -228,6 +235,15 @@ repetition(dow(Day)) -->
 repetition(dow(Days)) -->
     split(comma, Words),
     { maplist(codes_dow, Words, Days) },
+    !.
+repetition(month(Month)) -->
+    string(Word),
+    end_of_content,
+    { codes_month(Word, Month) },
+    !.
+repetition(month(Months)) -->
+    split(comma, Words),
+    { maplist(codes_month, Words, Months) },
     !.
 repetition(nth(N,Form)) -->
     ordinal(N),
