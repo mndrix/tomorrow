@@ -149,6 +149,10 @@ month_number_(december, 12).
 %       * `midnight` - shortcut for `00:00:00`
 %       * `noon` - shortcut for `12:00:00`
 %       * `final_moment` - shortcut for `23:59:59.99999999999999`
+%       * `after(Form)` - all times after Form
+%       * `before(Form)` - all times before Form
+%       * `future` - alias for `after(now)`
+%       * `past` - alias for `before(now)`
 %       * `rfc3339(Text)` - the nanosecond indicated by the RFC 3339
 %         date string.  Text can be atom or codes.
 %       * `nth(N,Form)` - Nth day (1-based) that matches Form in the
@@ -264,6 +268,16 @@ form_time(mjn(Mjn), Dt) :-
     datetime(Dt, Mjd, Nano),
     DayInNanos = 86_400_000_000_000,
     Mjn #= Mjd*DayInNanos + Nano.
+form_time(future, Dt) :-
+    form_time(after(now), Dt).
+form_time(past, Dt) :-
+    form_time(before(now), Dt).
+form_time(after(Form), Dt) :-
+    form_time(Form, Threshold),
+    compare_time(>,Dt,Threshold).
+form_time(before(Form), Dt) :-
+    form_time(Form, Threshold),
+    compare_time(<,Dt,Threshold).
 form_time(nth(N,Form), Dt) :-
     N > 0,
     nonvar(Form),
