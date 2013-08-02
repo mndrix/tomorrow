@@ -39,7 +39,7 @@
     O == (>).
 
 'describing future dates' :-
-    form_time([2013-08-02], Today),
+    form_time(2013-08-02, Today),
     compare_time(<,Today,Future),
     forall( member(YMD, [2013-08-03, 2013-08-04, 2014-_-_])
           , form_time(YMD, Future)
@@ -47,3 +47,10 @@
     forall( member(YMD, [2013-08-01, 2013-07-31, 2012-_-_])
           , \+ form_time(YMD, Future)
           ).
+
+'form against form' :-
+    compare_time( O
+                , rfc3339("2007-06-05T04:03:01")
+                , rfc3339("1970-12-31T23:47:18.729")
+                ),
+    O == (>).

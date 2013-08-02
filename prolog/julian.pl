@@ -398,14 +398,23 @@ rfc3339(Y,Mon,D,H,Min,S,Zone) -->
     { gregorian(Y,Mon,D) }.
 
 
-%%	compare_time(+Order, ?A:datetime, ?B:datetime) is semidet.
-%%  compare_time(-Order, ?A:datetime, ?B:datetime) is nondet.
+%%	compare_time(+Order, ?A, ?B) is semidet.
+%%	compare_time(-Order, ?A, ?B) is nondet.
 %
 %	True if the chronological relation between A and B is described by Order.
 %	None of the arguments needs to be bound.  When Order is not bound,
 %	compare_time/3 iterates all possible values of Order on backtracking.
 %	In other words, the relation is not stored as contraints on Order.
-compare_time(Order, A, B) :-
+%
+%	A and B can be given as datetime values or forms.  For example,
+%	this is a legitimate goal:
+%
+%	    compare_time(Order, now, unix(1375475330.414)).
+compare_time(Order, A0, B0) :-
+    ( var(A0) -> A=A0 ; form_time(A0, A) ),
+    ( var(B0) -> B=B0 ; form_time(B0, B) ),
+    compare_time_(Order, A, B).
+compare_time_(Order, A, B) :-
     form_time(mjn(MjnA), A),
     form_time(mjn(MjnB), B),
     zcompare(Order, MjnA, MjnB),
