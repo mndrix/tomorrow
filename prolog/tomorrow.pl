@@ -261,6 +261,10 @@ repetition([FormB, FormA]) -->
     { phrase(repetition(FormA), A) },
     { phrase(repetition(FormB), B) },
     !.
+repetition(nth(-1,Form)) -->
+    "final ",
+    repetition(Form),
+    !.
 repetition(nth(N,Form)) -->
     ordinal(N),
     " ",

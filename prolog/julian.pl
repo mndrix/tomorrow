@@ -283,15 +283,15 @@ form_time(after(Form), Dt) :-
 form_time(before(Form), Dt) :-
     form_time(Form, Threshold),
     compare_time(<,Dt,Threshold).
-form_time(nth(N,Form), Dt) :-
-    N > 0,
+form_time(nth(N0,Form), Dt) :-
     nonvar(Form),
     datetime(Dt, _, _),
     !,
     form_time(Year-Month-_, Dt),
     form_time([Year-Month-_, Form], X),
     findall_dates(X, Dates),
-    nth1(N, Dates, Dt).
+    ( N0 > 0 -> N is N0-1 ; N=N0 ),
+    circular_nth0(N, Dates, Dt).
 form_time(datetime(Mjd,Nano), datetime(Mjd,Nano)).
 form_time(rfc3339(Codes), Dt) :-
     form_time([Y-Mon-D, H:Min:S], Dt),
@@ -309,6 +309,17 @@ form_time(rfc3339(Codes), Dt) :-
 form_time(Form) :-
     form_time(Form, _).
 
+
+% TODO factor this out to list_util and use delay:length/2 and
+% delay:plus/3 to implement it.
+circular_nth0(Index, List, Element) :-
+    Index >= 0,
+    !,
+    nth0(Index, List, Element).
+circular_nth0(Index0, List, Element) :-
+    length(List, Len),
+    plus(Index0, Len, Index),
+    nth0(Index, List, Element).
 
 %%	findall_dates(+Dt, -Dts:list)
 %

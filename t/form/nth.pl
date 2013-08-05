@@ -9,3 +9,7 @@
 'second weekday, Februray 2002' :-
     form_time([2002-02-Day, nth(2, weekday)]),
     Day =:= 4.
+
+'final weekday, August 2013' :-
+    form_time([2013-08-Day, nth(-1, weekday)]),
+    Day =:= 30.
