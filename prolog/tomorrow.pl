@@ -265,6 +265,13 @@ repetition(nth(-1,Form)) -->
     "final ",
     repetition(Form),
     !.
+repetition(nth([N0,N1],Form)) -->
+    ordinal(N0),
+    comma,
+    ordinal(N1),
+    " ",
+    repetition(Form),
+    !.
 repetition(nth(N,Form)) -->
     ordinal(N),
     " ",

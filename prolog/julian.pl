@@ -156,7 +156,9 @@ month_number_(december, 12).
 %       * `rfc3339(Text)` - the nanosecond indicated by the RFC 3339
 %         date string.  Text can be atom or codes.
 %       * `nth(N,Form)` - Nth day (1-based) that matches Form in the
-%         month
+%         month.  N can be a list of days in which case form_time/2
+%         is multi.  This form isn't yet as flexible in different modes
+%         as I'd like.
 %       * `true` - noop constraint that matches all dates
 %       * `Datetime` - a datetime itself can be used as a form
 %       * `mjn(Mjn)` - modified Julian nanoseconds
@@ -283,13 +285,15 @@ form_time(after(Form), Dt) :-
 form_time(before(Form), Dt) :-
     form_time(Form, Threshold),
     compare_time(<,Dt,Threshold).
-form_time(nth(N0,Form), Dt) :-
+form_time(nth(Ns0,Form), Dt) :-
     nonvar(Form),
-    datetime(Dt, _, _),
+    datetime(Dt),
     !,
     form_time(Year-Month-_, Dt),
     form_time([Year-Month-_, Form], X),
     findall_dates(X, Dates),
+    ( is_list(Ns0) -> Ns=Ns0 ; Ns=[Ns0] ),
+    member(N0, Ns),
     ( N0 > 0 -> N is N0-1 ; N=N0 ),
     circular_nth0(N, Dates, Dt).
 form_time(datetime(Mjd,Nano), datetime(Mjd,Nano)).
