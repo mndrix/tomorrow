@@ -1,16 +1,24 @@
-/*
-:- module(julian, [ form_time/2
+:- module(julian, [ compare_time/3
+                  , datetime/1
+                  , datetime/3
+                  , delta_time/3
+                  , dow_number/2
+                  , form_time/2
                   , form_time/1
-                  , day_of_week/2
                   , gregorian/3
                   , mjd/1
+                  , month_number/2
                   , nano/1
                   ]).
-*/
 :- use_module(library(clpfd)).
 :- use_module(library(when), [when/2]).
 :- use_module(library(dcg/basics), [float//1, integer//1, string//1]).
 :- use_module(library(list_util), [xfy_list/3]).
+:- use_module(library(delay)).
+
+% many clpfd constraints trigger this warning.
+% disable it for now.
+:- style_check(-no_effect).
 
 % This module represents times, dates and sets of those using
 % terms of the form =|datetime(MJD, Nano)|=.  =MJD= is an
@@ -288,7 +296,7 @@ form_time(before(Form), Dt) :-
 form_time(nth(Ns0,Form), Dt) :-
     nonvar(Form),
     datetime(Dt),
-    !,
+    !,  % no other form_time/2 clause will work
     form_time(Year-Month-_, Dt),
     form_time([Year-Month-_, Form], X),
     findall_dates(X, Dates),
@@ -365,14 +373,14 @@ seconds_nanos_(Seconds, Nanos) :-
 % wide.
 padded_integer(W,N) -->
     { digit_len(N, DigitLen) },
-    { lazy_plus(PadLen, DigitLen, W) },
+    { delay(plus(PadLen, DigitLen, W)) },
     count(PadLen, 0'0),
     integer(N),
     !.
 
 
 count(N0, X) -->
-    { when( (ground(N);ground(N0)),succ(N, N0)) },
+    { delay(succ(N, N0)) },
     [X],
     count(N, X).
 count(0, _, L, L).
@@ -386,15 +394,6 @@ digit_len_(N, Length) :-
     ; % otherwise ->
         Length is floor(log10(N)) + 1
     ).
-
-
-lazy_plus(X,Y,Z) :-
-    when( ( (ground(X),ground(Y))
-          ; (ground(X),ground(Z))
-          ; (ground(Y),ground(Z))
-          )
-        , plus(X,Y,Z)
-        ).
 
 
 rfc3339(Y,Mon,D,H,Min,S,Zone) -->

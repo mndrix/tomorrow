@@ -17,8 +17,8 @@
 'second and fourth Sunday' :-
     Form = nth([2,4], dow(sunday)),
     forall( member(X, [2013-08-11, 2013-08-25])
-          , form_time([X,Form], Dt)
+          , form_time([X,Form])
           ),
     forall( member(X, [2013-08-18, 2002-02-09])
-          , \+ form_time([X,Form], Dt)
+          , \+ form_time([X,Form])
           ).

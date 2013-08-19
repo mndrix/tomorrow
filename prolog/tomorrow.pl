@@ -1,10 +1,13 @@
 :- use_module(library(func)).
 :- use_module(library(readutil), [read_line_to_codes/2]).
 :- use_module(library(uri_qq)).
-:- use_module(library(dcg/basics), [string_without//2]).
+:- use_module(library(dcg/basics), [ integer//1
+                                   , string//1
+                                   , string_without//2
+                                   ]).
 
-
-:- [http, julian].
+:- use_module(julian).
+:- [http].
 
 % tokens( refresh_token:atom
 %       , access_token:atom
@@ -89,17 +92,14 @@ main(_) :-
 
 % TODO support all insertable fields of a task
 insert_task(AccessToken, TaskList, Task, Inserted) :-
-    TaskListId = _, % hack around quasiquote singleton warning
-    AccessToken = _,
-
     % build JSON structure. intentionally omit due date
     Request = json([ title = title $ Task
                    , notes = notes $ Task
                    ]),
 
-    __uri_qq_base = 'https://www.googleapis.com/tasks/v1/',
+    Base = 'https://www.googleapis.com/tasks/v1/',
     TaskListId = id $ TaskList,
-    http_post( {|uri||lists/$TaskListId/tasks?access_token=$AccessToken|}
+    http_post( {|uri(Base)||lists/$TaskListId/tasks?access_token=$AccessToken|}
              , json(Request)
              , json(Response)
              ),
@@ -107,14 +107,10 @@ insert_task(AccessToken, TaskList, Task, Inserted) :-
 
 
 delete_task(AccessToken, TaskList, Task) :-
-    TaskListId = _, % hack around quasiquote singleton warning
-    TaskId = _,
-    AccessToken = _,
-
-    __uri_qq_base = 'https://www.googleapis.com/tasks/v1/',
+    Base = 'https://www.googleapis.com/tasks/v1/',
     TaskListId = id $ TaskList,
     TaskId = id $ Task,
-    Uri = {|uri||lists/$TaskListId/tasks/$TaskId?access_token=$AccessToken|},
+    Uri = {|uri(Base)||lists/$TaskListId/tasks/$TaskId?access_token=$AccessToken|},
     http_delete(Uri,_).
 
 
@@ -254,7 +250,8 @@ repetition(gregorian(Y,M,_)) -->
     { codes_month(Word, Month) },
     { month_number(Month, M) },
     " ",
-    padded_integer(4, Y),
+    integer(Y),
+    { Y > 999 },
     !.
 repetition([FormB, FormA]) -->
     split(within, [A,B]),
@@ -292,9 +289,8 @@ tasklist(AccessToken, TaskList) :-
     % TODO factor out predicate for building tasks URIs
     % TODO factor out predicate for making tasks API requests
 
-    AccessToken = _, % hack around quasiquote singleton warning
-    __uri_qq_base = 'https://www.googleapis.com/tasks/v1/',
-    http_get( {|uri||users/@me/lists?access_token=$AccessToken|}
+    Base = 'https://www.googleapis.com/tasks/v1/',
+    http_get( {|uri(Base)||users/@me/lists?access_token=$AccessToken|}
             , json(JSON)
             ),
 
@@ -310,12 +306,9 @@ tasklist(AccessToken, TaskList) :-
 %  True if Task is a child task of TaskList for the user represented by
 %  AccessToken.
 task(AccessToken, TaskList, Task) :-
-    AccessToken = _, % hack around quasiquote singleton warnings
-    TaskListId = _,
-
-    __uri_qq_base = 'https://www.googleapis.com/tasks/v1/',
+    Base = 'https://www.googleapis.com/tasks/v1/',
     id(TaskList, TaskListId),
-    http_get( {|uri||lists/$TaskListId/tasks?access_token=$AccessToken|}
+    http_get( {|uri(Base)||lists/$TaskListId/tasks?access_token=$AccessToken|}
             , json(JSON)
             ),
 
@@ -349,7 +342,6 @@ get_access_token(AccessToken) :-
     access_token(Tokens, AccessToken).
 get_access_token(AccessToken) :-
     % use OAuth flow to acquire an access code
-    Query = _, % hack around quasiquote singleton warning
     Query = [ response_type = code
             , client_id     = '103740898794.apps.googleusercontent.com'
             , redirect_uri  = 'urn:ietf:wg:oauth:2.0:oob'

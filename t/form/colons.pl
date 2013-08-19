@@ -1,5 +1,5 @@
 % vim: ft=prolog
-:- [prolog/julian].
+:- use_module(prolog/julian).
 :- use_module(library(tap)).
 
 midnight :-

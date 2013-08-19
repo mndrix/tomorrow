@@ -1,5 +1,6 @@
 % vim: ft=prolog
-:- [prolog/julian].
+:- use_module(library(clpfd)).
+:- use_module(prolog/julian).
 :- use_module(library(tap)).
 
 form_time([2013-07-09, weekday]).
