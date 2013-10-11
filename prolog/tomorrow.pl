@@ -58,13 +58,13 @@ main(_) :-
     % find Future list
     tasklist(AccessToken, Future),
     title(Future, 'Future'),
-    format('future id = ~w~n', id $ Future),
+    %format('future id = ~w~n', id $ Future),
 
     % find Today list
     tasklist(AccessToken, Today),
     title(Today, 'Today'),
-    format('today id = ~w~n', id $ Today),
-    nl,
+    %format('today id = ~w~n', id $ Today),
+    %nl,
 
     % tasks in the Future list
     task(AccessToken, Future, Template),
@@ -74,19 +74,20 @@ main(_) :-
     % TODO for debugging
     %format('would have inserted to Today: ~w~n', [Task]),
     %fail,
-    insert_task(AccessToken, Today, Task, Inserted),
-    write_quoted(Inserted),
-    nl,
+    insert_task(AccessToken, Today, Task, _Inserted),
+    %write_quoted(Inserted),
+    %nl,
 
     % clean up templates, if they need it
     ( Status = delete ->
         delete_task(AccessToken, Future, Template),
-        writeln('deleted template that served its purpose')
+        %writeln('deleted template that served its purpose')
+        true
     ; % otherwise ->
         true
     ),
 
-    nl,
+    %nl,
     fail.
 
 
@@ -144,8 +145,8 @@ template_applicable(Task, retain) :-
     repeats(Task, English, _),
     English \= "",
     ( phrase(repetition(Constraints), English) ->
-        form_time([today|Constraints]),
-        format('~w =>~n', [Constraints])
+        form_time([today|Constraints])
+        %format('~w =>~n', [Constraints])
     ; % otherwise ->
         format('Unknown repetition: "~s"~n', [English]),
         fail
