@@ -201,6 +201,7 @@ comma --> ",".
 
 within --> " during ".
 within --> " in ".
+within --> " of ".
 
 ordinal(N) -->
     ordinal_short(N).
