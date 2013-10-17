@@ -73,3 +73,20 @@ weekday :-
     var(Y),
     M == 2,
     D == 1.
+
+'even years' :-
+    phrase(repetition(X), "even years"),
+    X = gregorian(Y,M,D),
+
+    % none of the date components is bound
+    var(Y),
+    var(M),
+    var(D),
+
+    % and Y only allows even numbered years
+    forall( member(Year,[1998, 2000, 2002, 2012])
+          , Y = Year
+          ),
+    forall( member(Year,[1997, 1999, 2001, 2013])
+          , Y \= Year
+          ).

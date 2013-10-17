@@ -1,3 +1,4 @@
+:- use_module(library(clpfd)).
 :- use_module(library(func)).
 :- use_module(library(lambda)).
 :- use_module(library(readutil), [read_line_to_codes/2]).
@@ -220,6 +221,16 @@ ordinal_short(N) -->
     ( "th"; "st"; "nd"; "rd" ).
 
 
+parity(X) -->
+    "even",
+    !,
+    { X mod 2 #= 0 }.
+parity(X) -->
+    "odd",
+    !,
+    { X mod 2 #= 1 }.
+
+
 % True if Day is an atom representing the day of week named in Codes
 codes_dow(Codes, Day) :-
     atom_codes(Atom, Codes),
@@ -273,6 +284,9 @@ repetition(gregorian(_,M,D)) -->
     " ",
     ordinal(D),
     !.
+repetition(gregorian(Y,_,_)) -->
+    parity(Y),
+    " years",
     !.
 repetition([A,B|T]) -->  % list of at least two elements (indexable)
     { Forms = [A,B|T] },
