@@ -203,6 +203,8 @@ within --> " during ".
 within --> " in ".
 
 ordinal(N) -->
+    ordinal_short(N).
+ordinal(N) -->
     ordinal_long(N).
 
 ordinal_long(1) --> "first".
@@ -210,6 +212,10 @@ ordinal_long(2) --> "second".
 ordinal_long(3) --> "third".
 ordinal_long(4) --> "fourth".
 ordinal_long(5) --> "fifth".
+
+ordinal_short(N) -->
+    integer(N),
+    ( "th"; "st"; "nd"; "rd" ).
 
 
 % True if Day is an atom representing the day of week named in Codes
@@ -257,6 +263,13 @@ repetition(gregorian(Y,M,_)) -->
     " ",
     integer(Y),
     { Y > 999 },
+    !.
+repetition(gregorian(_,M,D)) -->
+    string(Word),
+    { codes_month(Word, Month) },
+    { month_number(Month, M) },
+    " ",
+    ordinal(D),
     !.
 repetition([FormB, FormA]) -->
     split(within, [A,B]),

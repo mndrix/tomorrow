@@ -60,3 +60,11 @@ weekday :-
 'second and fourth Sunday' :-
     phrase(repetition(X), "second and fourth sunday"),
     X == nth([2,4], dow(sunday)).
+
+
+'month name and day number' :-
+    phrase(repetition(X), "February 1st"),
+    X = gregorian(Y,M,D),
+    var(Y),
+    M == 2,
+    D == 1.
