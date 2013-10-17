@@ -6,7 +6,9 @@
                                    , string_without//2
                                    ]).
 
-:- use_module(julian).
+:- use_module(library(julian)).
+:- use_module(library(julian/util), [dow_number/2]).
+:- use_module(library(julian/calendar/gregorian), [month_number/2]).
 :- [http].
 
 % tokens( refresh_token:atom
