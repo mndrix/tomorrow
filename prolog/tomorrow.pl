@@ -202,12 +202,14 @@ comma --> ",".
 within --> " during ".
 within --> " in ".
 
+ordinal(N) -->
+    ordinal_long(N).
 
-ordinal(1) --> "first".
-ordinal(2) --> "second".
-ordinal(3) --> "third".
-ordinal(4) --> "fourth".
-ordinal(5) --> "fifth".
+ordinal_long(1) --> "first".
+ordinal_long(2) --> "second".
+ordinal_long(3) --> "third".
+ordinal_long(4) --> "fourth".
+ordinal_long(5) --> "fifth".
 
 
 % True if Day is an atom representing the day of week named in Codes
