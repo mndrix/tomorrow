@@ -1,4 +1,5 @@
 :- use_module(library(func)).
+:- use_module(library(lambda)).
 :- use_module(library(readutil), [read_line_to_codes/2]).
 :- use_module(library(uri_qq)).
 :- use_module(library(dcg/basics), [ integer//1
@@ -272,11 +273,15 @@ repetition(gregorian(_,M,D)) -->
     " ",
     ordinal(D),
     !.
-repetition([FormB, FormA]) -->
-    split(within, [A,B]),
-    { phrase(repetition(FormA), A) },
-    { phrase(repetition(FormB), B) },
     !.
+repetition([A,B|T]) -->  % list of at least two elements (indexable)
+    { Forms = [A,B|T] },
+    split(within, Parts),
+    { length(Parts, N), N > 1 },
+    { maplist(\Part^Form^once(phrase(repetition(Form),Part)), Parts, Fs) },
+    !,
+    % optimization: constraints on the end are usually more concrete
+    { reverse(Fs, Forms) }.
 repetition(nth(-1,Form)) -->
     "final ",
     repetition(Form),

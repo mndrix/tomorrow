@@ -52,6 +52,11 @@ weekday :-
     X == [month(may), nth(2,dow(friday))].
 
 
+'list of refinements' :-
+    phrase(repetition(X), "first Monday of April in even years"),
+    X = [gregorian(_, _, _), month(april), nth(1, dow(monday))].
+
+
 'month name and year' :-
     phrase(repetition(X), "August 2013"),
     X = gregorian(2013,8,_).
